@@ -1,10 +1,11 @@
-package survey.model.answer;
+package survey.model.surveyresponse;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import survey.model.file.File;
+import javax.persistence.ManyToOne;
+import survey.model.core.File;
 
 /**
  * Class description.
@@ -25,7 +26,7 @@ public class TextAnswer extends Answer {
 
   private String text;
 
-  @OneToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "attachment_id")
   private File attachment;
 

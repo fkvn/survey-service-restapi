@@ -1,4 +1,4 @@
-package survey.model.answer;
+package survey.model.surveyresponse;
 
 import java.util.Map;
 import javax.persistence.CollectionTable;

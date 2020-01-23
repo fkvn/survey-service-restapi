@@ -1,4 +1,4 @@
-package survey.model.answer;
+package survey.model.surveyresponse;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;

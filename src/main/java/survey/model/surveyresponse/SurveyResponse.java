@@ -1,4 +1,4 @@
-package survey.model.survey;
+package survey.model.surveyresponse;
 
 import java.io.Serializable;
 import java.util.List;
@@ -10,7 +10,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 import javax.persistence.Table;
-import survey.model.answer.AnswerSection;
+import survey.model.survey.Survey;
 
 /**
  * Class description.

@@ -1,9 +1,9 @@
-    create table answer (
+  create table answer (
        answer_type varchar(31) not null,
         id bigint not null,
         answer_index integer,
-        rating integer,
         text varchar(255),
+        rating integer,
         question_id bigint,
         answer_section_id bigint not null,
         attachment_id bigint,
@@ -28,7 +28,7 @@
     create table file (
        id bigint not null,
         date datetime not null,
-        file_data longblob,
+        fileData longblob,
         name varchar(255) not null,
         size bigint,
         type varchar(255),
@@ -67,8 +67,8 @@
        question_type varchar(31) not null,
         id bigint not null,
         description varchar(255) not null,
-        max_selections integer,
-        min_selections integer,
+        number_of_selections integer default 4,
+        ranking_scale integer default 1 not null,
         rating_scale integer not null,
         attachment_allowed boolean default false not null,
         text_length integer default 20,

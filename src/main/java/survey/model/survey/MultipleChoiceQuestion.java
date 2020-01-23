@@ -1,4 +1,4 @@
-package survey.model.question;
+package survey.model.survey;
 
 import java.util.List;
 import javax.persistence.CollectionTable;
@@ -32,11 +32,12 @@ public class MultipleChoiceQuestion extends Question {
   @Column(name = "choice", columnDefinition = "varchar(3000)")
   @OrderColumn(name = "choice_index")
   private List<String> choices;
+  
+  @Column(name = "min_selections")
+  private int minSelections;
 
-
-  @Column(name = "number_of_selections", columnDefinition = "integer default 4")
-  private int numberOfSelections;
-
+  @Column(name = "max_selections")
+  private int maxSelections;
 
   public List<String> getChoices() {
     return choices;
@@ -48,13 +49,23 @@ public class MultipleChoiceQuestion extends Question {
   }
 
 
-  public int getNumberOfSelections() {
-    return numberOfSelections;
+  public int getMinSelections() {
+    return minSelections;
   }
 
 
-  public void setNumberOfSelections(int numberOfSelections) {
-    this.numberOfSelections = numberOfSelections;
+  public void setMinSelections(int minSelections) {
+    this.minSelections = minSelections;
+  }
+
+
+  public int getMaxSelections() {
+    return maxSelections;
+  }
+
+
+  public void setMaxSelections(int maxSelections) {
+    this.maxSelections = maxSelections;
   }
 
 }

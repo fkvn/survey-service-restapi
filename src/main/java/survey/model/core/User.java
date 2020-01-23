@@ -1,4 +1,4 @@
-package survey.model.user;
+package survey.model.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;

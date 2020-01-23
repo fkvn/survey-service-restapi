@@ -1,4 +1,4 @@
-package survey.model.survey;
+package survey.model.surveychart;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -15,7 +15,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.OrderColumn;
 import javax.persistence.Table;
-import survey.model.user.User;
+import survey.model.core.User;
 
 /**
  * Class description.

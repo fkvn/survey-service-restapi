@@ -13,8 +13,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 import javax.persistence.Table;
-import survey.model.question.QuestionSection;
-import survey.model.user.User;
+import survey.model.core.User;
 
 
 /**

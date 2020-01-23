@@ -1,4 +1,4 @@
-package survey.model.file;
+package survey.model.core;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -11,7 +11,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import survey.model.user.User;
 
 /**
  * Class description.
@@ -49,6 +48,7 @@ public class File implements Serializable {
   private User owner;
 
   @Lob
+  @Column(name = "file_data")
   private byte[] fileData;
 
   private String url;

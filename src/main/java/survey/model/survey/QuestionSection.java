@@ -1,4 +1,4 @@
-package survey.model.question;
+package survey.model.survey;
 
 import java.io.Serializable;
 import java.util.List;

@@ -1,4 +1,4 @@
-package survey.model.survey;
+package survey.model.surveychart;
 
 import java.io.Serializable;
 import javax.persistence.Column;
@@ -8,6 +8,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import survey.model.survey.Survey;
 
 /**
  * Class description.

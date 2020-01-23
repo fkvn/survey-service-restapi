@@ -1,4 +1,4 @@
-package survey.model.question;
+package survey.model.survey;
 
 import java.util.List;
 import javax.persistence.CollectionTable;
@@ -34,10 +34,6 @@ public class RankingQuestion extends Question {
   private List<String> rankingChoices;
 
 
-  @Column(name = "ranking_scale", nullable = false, columnDefinition = "integer default 1")
-  private int rankingScale;
-
-
   public List<String> getRankingChoices() {
     return rankingChoices;
   }
@@ -47,13 +43,4 @@ public class RankingQuestion extends Question {
     this.rankingChoices = rankingChoices;
   }
 
-
-  public int getRankingScale() {
-    return rankingScale;
-  }
-
-
-  public void setRankingScale(int rankingScale) {
-    this.rankingScale = rankingScale;
-  }
 }

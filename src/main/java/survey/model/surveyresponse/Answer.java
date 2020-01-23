@@ -1,4 +1,4 @@
-package survey.model.answer;
+package survey.model.surveyresponse;
 
 import java.io.Serializable;
 import javax.persistence.Column;
@@ -10,7 +10,7 @@ import javax.persistence.Inheritance;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import survey.model.question.Question;
+import survey.model.survey.Question;
 
 
 /**
