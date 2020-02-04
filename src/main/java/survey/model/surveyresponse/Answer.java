@@ -1,8 +1,11 @@
 package survey.model.surveyresponse;
 
+import java.beans.Transient;
 import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -10,6 +13,11 @@ import javax.persistence.Inheritance;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import survey.model.survey.Question;
 
 
@@ -23,59 +31,82 @@ import survey.model.survey.Question;
 @Entity
 @Inheritance
 @Table(name = "answer")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY,
+		property = "answerType")
+@JsonSubTypes({ @Type(value = MultipleChoiceAnswer.class, name = "MULTIPLE_CHOICE"),
+		@Type(value = RatingAnswer.class, name = "RATING"),
+		@Type(value = RankingAnswer.class, name = "RANKING"),
+		@Type(value = TextAnswer.class, name = "TEXT")
+
+})
 @DiscriminatorColumn(name = "answer_type")
 public abstract class Answer implements Serializable {
 
-  /**
-   * Default serialVersionUID.
-   * 
-   */
-  private static final long serialVersionUID = 1L;
+	/**
+	 * Default serialVersionUID.
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-  @Id
-  @GeneratedValue
-  private Long id;
+	@Id
+	@GeneratedValue
+	private Long id;
 
-  @ManyToOne
-  @JoinColumn(name = "answer_section_id", nullable = false)
-  private AnswerSection section;
+	@ManyToOne
+	@JoinColumn(name = "answer_section_id", nullable = false)
+	private AnswerSection section;
 
-  @Column(name = "answer_index")
-  private int index;
+	@Column(name = "answer_index")
+	private int index;
 
-  @ManyToOne
-  @JoinColumn(name = "question_id")
-  private Question question;
+	@ManyToOne
+	@JoinColumn(name = "question_id")
+	private Question question;
+	
+	
+	@Transient
+	public String getDecriminatorValue() {
 
-  public Long getId() {
-    return id;
-  }
+		return this.getClass().getAnnotation(DiscriminatorValue.class).value();
+	}
 
-  public void setId(Long id) {
-    this.id = id;
-  }
+	public Long getId() {
 
-  public AnswerSection getSection() {
-    return section;
-  }
+		return id;
+	}
 
-  public void setSection(AnswerSection section) {
-    this.section = section;
-  }
+	public void setId(Long id) {
 
-  public int getIndex() {
-    return index;
-  }
+		this.id = id;
+	}
 
-  public void setIndex(int index) {
-    this.index = index;
-  }
+	public AnswerSection getSection() {
 
-  public Question getQuestion() {
-    return question;
-  }
+		return section;
+	}
 
-  public void setQuestion(Question question) {
-    this.question = question;
-  }
+	public void setSection(AnswerSection section) {
+
+		this.section = section;
+	}
+
+	public int getIndex() {
+
+		return index;
+	}
+
+	public void setIndex(int index) {
+
+		this.index = index;
+	}
+
+	public Question getQuestion() {
+
+		return question;
+	}
+
+	public void setQuestion(Question question) {
+
+		this.question = question;
+	}
 }

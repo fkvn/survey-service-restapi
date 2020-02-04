@@ -14,21 +14,24 @@ import javax.persistence.Entity;
 @Entity
 @DiscriminatorValue("RATING")
 public class RatingQuestion extends Question {
-  /**
-   * Default serialVersionUID.
-   * 
-   */
-  private static final long serialVersionUID = 1L;
 
-  @Column(name = "rating_scale", nullable = false)
-  private int ratingScale;
+	/**
+	 * Default serialVersionUID.
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-  public int getRatingScale() {
-    return ratingScale;
-  }
+	@Column(name = "rating_scale", nullable = false, columnDefinition = "int default 0")
+	private int ratingScale;
 
-  public void setRatingScale(int ratingScale) {
-    this.ratingScale = ratingScale;
-  }
+	public int getRatingScale() {
+
+		return ratingScale;
+	}
+
+	public void setRatingScale(int ratingScale) {
+
+		this.ratingScale = ratingScale;
+	}
 
 }

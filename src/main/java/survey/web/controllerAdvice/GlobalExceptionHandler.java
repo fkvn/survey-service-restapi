@@ -87,28 +87,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<Object>(apiError, new HttpHeaders(), apiError.getStatus());
 	}
 
-	// @ExceptionHandler(DataIntegrityViolationException.class)
-	// protected ResponseEntity<Object> handleSQLIntegrityConstraintViolation(
-	// DataIntegrityViolationException ex, WebRequest request) {
-	//
-	// ApiError apiError = new ApiError();
-	// apiError.setStatusCode(HttpStatus.BAD_REQUEST.value());
-	// apiError.setErrorStatus(HttpStatus.BAD_REQUEST);
-	// apiError.setPath(request.getDescription(true).split(";")[0].split("=")[1]);
-	//
-	// String errorMessage = ex.getRootCause().toString();
-	// apiError.setMessage(errorMessage);
-	// return new ResponseEntity<Object>(apiError, new HttpHeaders(), apiError.getErrorStatus());
-	// }
-	//
-	// @ExceptionHandler(Exception.class)
-	// protected ResponseEntity<Object> handleExceptions(Exception ex) {
-	// ex.printStackTrace();
-	// Map<String, String> errMessages = new HashMap<>();
-	// errMessages.put("message", ex.getLocalizedMessage());
-	// ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR,
-	// ex.getClass().getSimpleName() , errMessages);
-	// return new ResponseEntity<Object>(apiError, new HttpHeaders(), apiError.getStatus());
-	// }
+
+//	@ExceptionHandler(NullPointerException.class)
+//	protected ResponseEntity<Object> handleExceptions(Exception ex, WebRequest request) {
+//
+//		ex.printStackTrace();
+//		
+//		ApiError apiError = new ApiError();
+//		apiError.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+//		apiError.setError(ex.getCause().getLocalizedMessage());
+//		
+//		apiError.setPath(request.getDescription(true).split(";")[0].split("=")[1]);
+//		apiError.setMessage("aa: " + ex.getLocalizedMessage());
+//		
+//		return new ResponseEntity<Object>(apiError, new HttpHeaders(), apiError.getStatus());
+//	}
 
 }

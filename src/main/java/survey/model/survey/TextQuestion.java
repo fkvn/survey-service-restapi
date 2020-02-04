@@ -14,33 +14,38 @@ import javax.persistence.Entity;
 @Entity
 @DiscriminatorValue("TEXT")
 public class TextQuestion extends Question {
-  /**
-   * Default serialVersionUID.
-   * 
-   */
-  private static final long serialVersionUID = 1L;
 
-  @Column(name = "text_length", columnDefinition = "integer default 20")
-  private int textLength;
+	/**
+	 * Default serialVersionUID.
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-  @Column(name = "attachment_allowed", columnDefinition = "boolean default false", nullable = false)
-  private boolean attachmentAllowed;
+	@Column(name = "text_length", columnDefinition = "integer default 20")
+	private int textLength;
 
-  public int getTextLength() {
-    return textLength;
-  }
+	@Column(name = "attachment_allowed", columnDefinition = "boolean default false", nullable = false)
+	private boolean attachmentAllowed;
 
-  public void setTextLength(int textLength) {
-    this.textLength = textLength;
-  }
+	public int getTextLength() {
 
-  public boolean isAttachmentAllowed() {
-    return attachmentAllowed;
-  }
+		return textLength;
+	}
 
-  public void setAttachmentAllowed(boolean attachmentAllowed) {
-    this.attachmentAllowed = attachmentAllowed;
-  }
+	public void setTextLength(int textLength) {
+
+		this.textLength = textLength;
+	}
+
+	public boolean isAttachmentAllowed() {
+
+		return attachmentAllowed;
+	}
+
+	public void setAttachmentAllowed(boolean attachmentAllowed) {
+
+		this.attachmentAllowed = attachmentAllowed;
+	}
 
 
 }

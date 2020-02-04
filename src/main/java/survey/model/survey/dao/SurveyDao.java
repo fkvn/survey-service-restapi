@@ -6,7 +6,11 @@ import survey.model.survey.Survey;
 
 public interface SurveyDao {
 
-	public List<Survey> getSurveys();
+	public List<Survey> getOpenSurveys();
+	
+	public List<Survey> getDeletedSurveys();
+	
+	public List<Survey> getAllSurveys();
 
 	public Survey getSurvey(long id);
 

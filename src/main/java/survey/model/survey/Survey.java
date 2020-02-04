@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -13,6 +15,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 import javax.persistence.Table;
+
 import survey.model.core.User;
 
 
@@ -62,7 +65,7 @@ public class Survey implements Serializable {
   @JoinColumn(name = "author_id", nullable = false)
   private User author;
 
-  @OneToMany
+  @OneToMany(cascade = CascadeType.ALL)
   @JoinColumn(name = "survey_id")
   @OrderColumn(name = "section_index")
   private List<QuestionSection> questionSections;
