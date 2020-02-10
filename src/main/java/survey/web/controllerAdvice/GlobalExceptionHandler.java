@@ -67,16 +67,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<Object>(apiError, new HttpHeaders(), apiError.getStatus());
 	}
 
-	@ExceptionHandler(UserNotFoundException.class)
+	@ExceptionHandler({UserNotFoundException.class})
 	protected ResponseEntity<Object> hanlderCustomExceptions(Exception ex, WebRequest request) {
-
+		System.out.println("aaa " + ex.getCause().getMessage());
+		
 		ex.printStackTrace();
 
 		ApiError apiError = new ApiError();
 
 		if (ex.getClass().equals(UserNotFoundException.class))
 			apiError.setStatus(HttpStatus.NOT_FOUND);
-
+		
 		else
 			apiError.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
 
@@ -88,9 +89,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 
 
-//	@ExceptionHandler(NullPointerException.class)
+//	@ExceptionHandler
 //	protected ResponseEntity<Object> handleExceptions(Exception ex, WebRequest request) {
-//
+//		System.out.println("aaa " + ex.getClass().getSimpleName());
 //		ex.printStackTrace();
 //		
 //		ApiError apiError = new ApiError();
