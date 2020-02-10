@@ -1,15 +1,9 @@
-DROP TABLE `surveyService`.`answer`, 
-			`surveyService`.`answer_selection`, 
-			`surveyService`.`answer_section`,
-	        `surveyService`.`question`, 
-	        `surveyService`.`question_choices`, 
-	        `surveyService`.`question_ranking_choices`, 
-	        `surveyService`.`question_section`, 
-	        `surveyService`.`question_section_questions`, 
-	        `surveyService`.`survey_chart`, 
-	        `surveyService`.`survey_chart_point`, 
-	        `surveyService`.`survey_chart_serie`, 
-	        `surveyService`.`survey_chart_xcoordinate`, 
-	        `surveyService`.`survey_questions`, 
-	        `surveyService`.`survey_responses`,
-	        `surveyService`.`survey`;
+SET FOREIGN_KEY_CHECKS = 0;
+
+drop table if exists  `survey_responses`, `answer_section`, `answer_selection`, `answer`,
+								`question_choices`, `question_ranking_choices`, `question_section_questions`, `question_section`,
+								`survey_chart`, `survey_chart_point`, `survey_chart_serie`,`survey_chart_xcoordinate`, 
+                                `survey_questions`, `question`, `survey`,
+								`hibernate_sequence`;
+            
+SET FOREIGN_KEY_CHECKS = 1;
