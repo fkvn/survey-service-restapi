@@ -11,6 +11,10 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.OrderColumn;
 
+import com.fasterxml.jackson.annotation.JsonView;
+
+import survey.util.Views;
+
 /**
  * Class description.
  * 
@@ -28,6 +32,8 @@ public class RankingQuestion extends Question {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	
+	@JsonView(Views.Public.class)
 	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "question_ranking_choices",
 			joinColumns = @JoinColumn(name = "question_id"))
@@ -44,6 +50,13 @@ public class RankingQuestion extends Question {
 	public void setRankingChoices(List<String> rankingChoices) {
 
 		this.rankingChoices = rankingChoices;
+	}
+
+
+	@Override
+	public void updateQuestion(Question question) {
+		this.setDescription(question.getDescription());
+		this.setRankingChoices(((RankingQuestion) question).getRankingChoices());
 	}
 
 }

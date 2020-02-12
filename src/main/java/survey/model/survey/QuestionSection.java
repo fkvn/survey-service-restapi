@@ -3,14 +3,23 @@ package survey.model.survey;
 import java.io.Serializable;
 import java.util.List;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.OrderColumn;
 import javax.persistence.Table;
+
+import org.springframework.data.annotation.Transient;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+
+import survey.util.Views;
 
 /**
  * Class description.
@@ -31,14 +40,29 @@ public class QuestionSection implements Serializable {
 
   @Id
   @GeneratedValue
+  @JsonView(Views.Public.class)
   private Long id;
 
+  @JsonView(Views.Public.class)
   private String description;
 
-  @OneToMany(cascade = CascadeType.MERGE)
+  @ManyToMany(fetch = FetchType.EAGER)
   @JoinColumn(name = "question_section_id")
   @OrderColumn(name = "question_index")
+  @JsonView(Views.Internal.class)
   private List<Question> questions;
+  
+  @JsonIgnore
+  @ManyToOne(fetch = FetchType.LAZY)
+  @Transient
+  private Survey survey;
+  
+  @JsonIgnore
+  @JsonProperty("sectionIndex")
+  @Transient
+  public int getSectionIndex() {
+  	return survey.getQuestionSections().indexOf(this);
+  }
 
   public Long getId() {
     return id;

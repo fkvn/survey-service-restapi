@@ -4,6 +4,10 @@ import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
+import com.fasterxml.jackson.annotation.JsonView;
+
+import survey.util.Views;
+
 /**
  * Class description.
  * 
@@ -22,9 +26,11 @@ public class TextQuestion extends Question {
 	private static final long serialVersionUID = 1L;
 
 	@Column(name = "text_length", columnDefinition = "integer default 20")
+	@JsonView(Views.Public.class)
 	private int textLength;
 
 	@Column(name = "attachment_allowed", columnDefinition = "boolean default false", nullable = false)
+	@JsonView(Views.Public.class)
 	private boolean attachmentAllowed;
 
 	public int getTextLength() {
@@ -45,6 +51,13 @@ public class TextQuestion extends Question {
 	public void setAttachmentAllowed(boolean attachmentAllowed) {
 
 		this.attachmentAllowed = attachmentAllowed;
+	}
+
+	@Override
+	public void updateQuestion(Question question) {
+		this.setDescription(question.getDescription());
+		this.setTextLength(((TextQuestion) question).getTextLength());
+		this.setAttachmentAllowed(((TextQuestion) question).isAttachmentAllowed());
 	}
 
 

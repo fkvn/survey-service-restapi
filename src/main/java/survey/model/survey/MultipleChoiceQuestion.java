@@ -11,6 +11,10 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.OrderColumn;
 
+import com.fasterxml.jackson.annotation.JsonView;
+
+import survey.util.Views;
+
 /**
  * Class description.
  * 
@@ -21,6 +25,7 @@ import javax.persistence.OrderColumn;
 
 @Entity
 @DiscriminatorValue("MULTIPLE_CHOICE")
+@JsonView(Views.Public.class)
 public class MultipleChoiceQuestion extends Question {
 
 	/**
@@ -33,26 +38,16 @@ public class MultipleChoiceQuestion extends Question {
 	@CollectionTable(name = "question_choices", joinColumns = @JoinColumn(name = "question_id"))
 	@Column(name = "choice", columnDefinition = "varchar(3000)")
 	@OrderColumn(name = "choice_index")
+//	@JsonView(Views.Public.class)
 	private List<String> choices;
 
 	@Column(name = "min_selections", nullable = false, columnDefinition = "int default 1")
+//	@JsonView(Views.Public.class)
 	private int minSelections;
 
 	@Column(name = "max_selections", nullable = false, columnDefinition = "int default 1")
+//	@JsonView(Views.Public.class)
 	private int maxSelections;
-
-
-	// @JsonCreator
-	// public MultipleChoiceQuestion(@JsonProperty("minSelections") int minSelections,
-	// @JsonProperty("maxSelections") int maxSelections,
-	// @JsonProperty("choices") List<String> choices) {
-	//
-	// super();
-	// this.minSelections = minSelections;
-	// this.maxSelections = maxSelections;
-	// this.choices = choices;
-	// }
-
 
 	public List<String> getChoices() {
 
@@ -86,6 +81,15 @@ public class MultipleChoiceQuestion extends Question {
 	public void setMaxSelections(int maxSelections) {
 
 		this.maxSelections = maxSelections;
+	}
+
+	@Override
+	public void updateQuestion(Question question) {
+		
+		this.setDescription(question.getDescription());
+		this.setChoices(((MultipleChoiceQuestion) question).getChoices());
+		this.setMaxSelections(((MultipleChoiceQuestion) question).getMaxSelections());
+		this.setMinSelections(((MultipleChoiceQuestion) question).getMinSelections());
 	}
 
 }

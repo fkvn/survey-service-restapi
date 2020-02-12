@@ -4,19 +4,26 @@ import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
 
 import survey.model.core.User;
+import survey.util.Views;
 
 
 /**
@@ -30,124 +37,176 @@ import survey.model.core.User;
 @Table(name = "survey")
 public class Survey implements Serializable {
 
-  /**
-   * Default serialVersionUID.
-   * 
-   */
-  private static final long serialVersionUID = 1L;
+	/**
+	 * Default serialVersionUID.
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-  @Id
-  @GeneratedValue
-  private Long id;
+	@Id
+	@GeneratedValue
+	@JsonView(Views.Public.class)
+	private Long id;
 
-  @Column(nullable = false)
-  private String name;
+	@Column(nullable = false)
+	@JsonView(Views.Public.class)
+	private String name;
 
-  @Column(nullable = false)
-  private SurveyType type;
+	@Column(nullable = false)
+	@JsonView(Views.Public.class)
+	private SurveyType type;
 
-  @Column(nullable = false)
-  private String description;
+	@Column(nullable = false)
+	@JsonView(Views.Public.class)
+	private String description;
 
-  @Column(name = "publish_date")
-  private Calendar publishDate;
+	@Column(name = "publish_date")
+	@JsonView(Views.Public.class)
+	private Calendar publishDate;
 
-  @Column(name = "close_date")
-  private Calendar closeDate;
+	@Column(name = "close_date")
+	@JsonView(Views.Public.class)
+	private Calendar closeDate;
 
-  @Column(name = "created_date", nullable = false)
-  private Date createdDate;
+	@Column(name = "created_date", nullable = false)
+	@JsonView(Views.Public.class)
+	private Date createdDate;
 
-  @Column(nullable = false)
-  private boolean deleted;
+	@Column(nullable = false)
+	@JsonView(Views.Public.class)
+	private boolean closed;
 
-  @ManyToOne
-  @JoinColumn(name = "author_id", nullable = false)
-  private User author;
+	@ManyToOne
+	@JoinColumn(name = "author_id", nullable = false)
+	@JsonView(Views.Public.class)
+	private User author;
 
-  @OneToMany(cascade = CascadeType.ALL)
-  @JoinColumn(name = "survey_id")
-  @OrderColumn(name = "section_index")
-  private List<QuestionSection> questionSections;
+	@JsonView(Views.Internal.class)
+	@OneToMany(fetch = FetchType.EAGER)
+	@JoinColumn(name = "survey_id")
+	@OrderColumn(name = "section_index")
+	private List<QuestionSection> questionSections;
 
-  public Long getId() {
-    return id;
-  }
+	@JsonView(Views.Internal.class)
+	@ManyToMany(fetch = FetchType.LAZY)
+	private  Set<Question> questions;
 
-  public void setId(Long id) {
-    this.id = id;
-  }
+	@JsonProperty("numberOfSections")
+	@JsonView(Views.Public.class)
+	@Transient
+	public int getNumOfSections() {
 
-  public String getName() {
-    return name;
-  }
+		return questionSections.size();
+	}
 
-  public void setName(String name) {
-    this.name = name;
-  }
+	public Long getId() {
 
-  public SurveyType getType() {
-    return type;
-  }
+		return id;
+	}
 
-  public void setType(SurveyType type) {
-    this.type = type;
-  }
+	public void setId(Long id) {
 
-  public String getDescription() {
-    return description;
-  }
+		this.id = id;
+	}
 
-  public void setDescription(String description) {
-    this.description = description;
-  }
+	public String getName() {
 
-  public Calendar getPublishDate() {
-    return publishDate;
-  }
+		return name;
+	}
 
-  public void setPublishDate(Calendar publishDate) {
-    this.publishDate = publishDate;
-  }
+	public void setName(String name) {
 
-  public Calendar getCloseDate() {
-    return closeDate;
-  }
+		this.name = name;
+	}
 
-  public void setCloseDate(Calendar closeDate) {
-    this.closeDate = closeDate;
-  }
+	public SurveyType getType() {
 
-  public Date getCreatedDate() {
-    return createdDate;
-  }
+		return type;
+	}
 
-  public void setCreatedDate(Date createdDate) {
-    this.createdDate = createdDate;
-  }
+	public void setType(SurveyType type) {
 
-  public boolean isDeleted() {
-    return deleted;
-  }
+		this.type = type;
+	}
 
-  public void setDeleted(boolean deleted) {
-    this.deleted = deleted;
-  }
+	public String getDescription() {
 
-  public User getAuthor() {
-    return author;
-  }
+		return description;
+	}
 
-  public void setAuthor(User author) {
-    this.author = author;
-  }
+	public void setDescription(String description) {
 
-  public List<QuestionSection> getQuestionSections() {
-    return questionSections;
-  }
+		this.description = description;
+	}
 
-  public void setQuestionSections(List<QuestionSection> questionSections) {
-    this.questionSections = questionSections;
-  }
+	public Calendar getPublishDate() {
+
+		return publishDate;
+	}
+
+	public void setPublishDate(Calendar publishDate) {
+
+		this.publishDate = publishDate;
+	}
+
+	public Calendar getCloseDate() {
+
+		return closeDate;
+	}
+
+	public void setCloseDate(Calendar closeDate) {
+
+		this.closeDate = closeDate;
+	}
+
+	public Date getCreatedDate() {
+
+		return createdDate;
+	}
+
+	public void setCreatedDate(Date createdDate) {
+
+		this.createdDate = createdDate;
+	}
+
+	public User getAuthor() {
+
+		return author;
+	}
+
+	public void setAuthor(User author) {
+
+		this.author = author;
+	}
+
+	public List<QuestionSection> getQuestionSections() {
+
+		return questionSections;
+	}
+
+	public void setQuestionSections(List<QuestionSection> questionSections) {
+
+		this.questionSections = questionSections;
+	}
+
+	public Set<Question> getQuestions() {
+
+		return questions;
+	}
+
+	public void setQuestions(Set<Question> questions) {
+
+		this.questions = questions;
+	}
+
+	public boolean isClosed() {
+
+		return closed;
+	}
+
+	public void setClosed(boolean closed) {
+
+		this.closed = closed;
+	}
 
 }

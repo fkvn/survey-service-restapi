@@ -2,8 +2,8 @@ package survey.model.survey;
 
 import java.beans.Transient;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -18,12 +18,17 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import survey.model.surveyresponse.Answer;
+import survey.util.Views;
 
 
 /**
@@ -55,25 +60,32 @@ public abstract class Question implements Serializable {
 
 	@Id
 	@GeneratedValue
+	@JsonView(Views.Public.class)
 	private Long id;
 
 	@Column(nullable = false)
+	@JsonView(Views.Public.class)
 	private String description;
 
-	@OneToMany(mappedBy = "question")
+	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+	@JsonIdentityReference(alwaysAsId = true)
+	@JsonView(Views.SurveyQuestion.class)
+	@OneToMany(mappedBy = "question", fetch = FetchType.LAZY)
 	@OrderBy("id asc")
 	private List<Answer> answers;
 
-	@JsonIgnore
-	@ManyToMany(fetch = FetchType.LAZY)
+	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+	@JsonIdentityReference(alwaysAsId = true)
+	@ManyToMany(mappedBy = "questions", fetch = FetchType.LAZY)
 	@OrderBy("id asc")
-	private List<Survey> surveys;
+	@JsonView(Views.SurveyQuestion.class)
+	private Set<Survey> surveys;
 
-	public Question() {
+	@JsonIgnore
+	@ManyToMany(mappedBy = "questions", fetch = FetchType.LAZY)
+	@OrderBy("id asc")
+	private List<QuestionSection> questionSections;
 
-		this.answers = new ArrayList<>();
-	}
-	
 	@Transient
 	public String getDecriminatorValue() {
 
@@ -110,14 +122,26 @@ public abstract class Question implements Serializable {
 		this.answers = answers;
 	}
 
-	public List<Survey> getSurveys() {
+	public Set<Survey> getSurveys() {
 
 		return surveys;
 	}
 
-	public void setSurveys(List<Survey> surveys) {
+	public void setSurveys(Set<Survey> surveys) {
 
 		this.surveys = surveys;
 	}
+
+	public List<QuestionSection> getQuestionSections() {
+
+		return questionSections;
+	}
+
+	public void setQuestionSections(List<QuestionSection> questionSections) {
+
+		this.questionSections = questionSections;
+	}
+	
+	public abstract void updateQuestion(Question question);
 
 }
