@@ -1,12 +1,17 @@
 package survey.model.core;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+
+import survey.util.Views;
 
 /**
  * Project description.
@@ -27,9 +32,11 @@ public class User implements Serializable {
 
   @Id
   @GeneratedValue
+  @JsonView(Views.Public.class)
   private Long id;
 
   @Column(nullable = false, unique = true)
+  @JsonView(Views.Public.class)
   private String username;
 
   @JsonIgnore
