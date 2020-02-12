@@ -31,7 +31,7 @@ public class SurveyDaoImpl implements SurveyDao {
 	}
 
 	@Override
-	public List<Survey> getDeletedSurveys() {
+	public List<Survey> getClosedSurveys() {
 
 		return entityManager.createQuery("from Survey where deleted = :deleted", Survey.class)
 				.setParameter("deleted", true).getResultList();

@@ -19,16 +19,15 @@ public class QuestionSectionDaoImpl implements QuestionSectionDao {
 	private EntityManager entityManager;
 
 	@Override
-	public List<QuestionSection> getQuestionSection(Long surveyId) {
+	public List<QuestionSection> getQuestionSections(Long surveyId) {
 
-		Survey survey = entityManager.find(Survey.class, surveyId);
 		return entityManager
-				.createQuery("from QuestionSection where survey = :survey", QuestionSection.class)
-				.setParameter("survey", survey).getResultList();
+				.createQuery("from QuestionSection where survey_id = :surveyId", QuestionSection.class)
+				.setParameter("surveyId", surveyId).getResultList();
 	}
 
 	@Override
-	public QuestionSection getQuestionSection(long id) {
+	public QuestionSection getQuestionSection(Long id) {
 
 		return entityManager.find(QuestionSection.class, id);
 	}
@@ -42,9 +41,11 @@ public class QuestionSectionDaoImpl implements QuestionSectionDao {
 
 	@Override
 	@Transactional
-	public void removeQuestionSection(long id) {
+	public void removeQuestionSection(Long surveyId, Long id) {
 
+		Survey survey = entityManager.find(Survey.class, surveyId);
 		QuestionSection questionSection = entityManager.find(QuestionSection.class, id);
+		survey.getQuestionSections().remove(questionSection);
 		entityManager.remove(questionSection);
 
 	}

@@ -6,11 +6,11 @@ import survey.model.survey.QuestionSection;
 
 public interface QuestionSectionDao {
 
-	public List<QuestionSection> getQuestionSection(Long surveyId);
+	public List<QuestionSection> getQuestionSections(Long surveyId);
 
-	public QuestionSection getQuestionSection(long id);
+	public QuestionSection getQuestionSection(Long id);
 
 	public QuestionSection saveQuestionSection(QuestionSection questionSection);
 
-	public void removeQuestionSection(long id);
+	public void removeQuestionSection(Long surveyId, Long id);
 }

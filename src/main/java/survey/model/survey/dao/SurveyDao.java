@@ -8,7 +8,7 @@ public interface SurveyDao {
 
 	public List<Survey> getOpenSurveys();
 	
-	public List<Survey> getDeletedSurveys();
+	public List<Survey> getClosedSurveys();
 	
 	public List<Survey> getAllSurveys();
 
