@@ -15,6 +15,8 @@ public interface QuestionDao {
 	public Question getSectionQuestion(Long sectionId, Long questionId);
 
 	public Question saveQuestion(Question question);
+	
+	public Question updateQuestion(Long sectionId, Long index, Long questionId, Question question);
 
 	public Question isExist(String questionType, String questionDescription);
 

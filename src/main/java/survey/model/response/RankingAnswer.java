@@ -1,6 +1,7 @@
-package survey.model.surveyresponse;
+package survey.model.response;
 
 import java.util.Map;
+
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -8,6 +9,7 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
+import javax.persistence.MapKeyColumn;
 
 /**
  * Class description.
@@ -26,8 +28,9 @@ public class RankingAnswer extends Answer {
   private static final long serialVersionUID = 1L;
 
   @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(name = "answer_selection", joinColumns = @JoinColumn(name = "answer_id"))
-  @Column(name = "selection_rank")
+  @CollectionTable(name = "answer_ranking_selection", joinColumns = @JoinColumn(name = "answer_id"))
+  @Column(name = "ranking")
+  @MapKeyColumn(name = "selection_rank")
   private Map<Integer, Integer> selectionRanks;
 
   public Map<Integer, Integer> getSelectionRanks() {

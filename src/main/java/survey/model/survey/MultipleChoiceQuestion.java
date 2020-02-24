@@ -85,7 +85,6 @@ public class MultipleChoiceQuestion extends Question {
 
 	@Override
 	public void updateQuestion(Question question) {
-		
 		this.setDescription(question.getDescription());
 		this.setChoices(((MultipleChoiceQuestion) question).getChoices());
 		this.setMaxSelections(((MultipleChoiceQuestion) question).getMaxSelections());

@@ -26,15 +26,15 @@ public class SurveyDaoImpl implements SurveyDao {
 	@Override
 	public List<Survey> getOpenSurveys() {
 
-		return entityManager.createQuery("from Survey where deleted = :deleted", Survey.class)
-				.setParameter("deleted", false).getResultList();
+		return entityManager.createQuery("from Survey where closed = :closed", Survey.class)
+				.setParameter("closed", false).getResultList();
 	}
 
 	@Override
 	public List<Survey> getClosedSurveys() {
 
-		return entityManager.createQuery("from Survey where deleted = :deleted", Survey.class)
-				.setParameter("deleted", true).getResultList();
+		return entityManager.createQuery("from Survey where closed = :closed", Survey.class)
+				.setParameter("closed", true).getResultList();
 	}
 
 	@Override
@@ -57,7 +57,4 @@ public class SurveyDaoImpl implements SurveyDao {
 		Survey survey = entityManager.find(Survey.class, id);
 		entityManager.remove(survey);
 	}
-
-
-
 }

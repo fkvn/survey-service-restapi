@@ -1,4 +1,4 @@
-package survey.model.surveyresponse;
+package survey.model.response;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -29,6 +29,5 @@ public class RatingAnswer extends Answer {
   public void setRating(Integer rating) {
     this.rating = rating;
   }
-
 
 }

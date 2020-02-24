@@ -50,4 +50,11 @@ public class QuestionSectionDaoImpl implements QuestionSectionDao {
 
 	}
 
+	@Override
+	@Transactional
+	public void removeQuestionSection(Long id) {
+
+		entityManager.remove(entityManager.find(QuestionSection.class, id));
+	}
+
 }

@@ -8,16 +8,19 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 import javax.persistence.Table;
 
 import org.springframework.data.annotation.Transient;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import survey.util.Views;
 
@@ -31,61 +34,72 @@ import survey.util.Views;
 @Entity
 @Table(name = "question_section")
 public class QuestionSection implements Serializable {
-  /**
-   * Default serialVersionUID.
-   * 
-   */
-  private static final long serialVersionUID = 1L;
+
+	/**
+	 * Default serialVersionUID.
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
 
-  @Id
-  @GeneratedValue
-  @JsonView(Views.Public.class)
-  private Long id;
+	@Id
+	@GeneratedValue
+	@JsonView(Views.Public.class)
+	private Long id;
 
-  @JsonView(Views.Public.class)
-  private String description;
+	@JsonView(Views.Public.class)
+	private String description;
 
-  @ManyToMany(fetch = FetchType.EAGER)
-  @JoinColumn(name = "question_section_id")
-  @OrderColumn(name = "question_index")
-  @JsonView(Views.Internal.class)
-  private List<Question> questions;
-  
-  @JsonIgnore
-  @ManyToOne(fetch = FetchType.LAZY)
-  @Transient
-  private Survey survey;
-  
-  @JsonIgnore
-  @JsonProperty("sectionIndex")
-  @Transient
-  public int getSectionIndex() {
-  	return survey.getQuestionSections().indexOf(this);
-  }
+	
+	@OneToMany(fetch = FetchType.EAGER)
+	@JoinColumn(name = "question_section_id")
+	@OrderColumn(name = "question_index")
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+  @JsonIdentityReference(alwaysAsId = true)
+	@JsonView(Views.Internal.class)
+	private List<Question> questions;
 
-  public Long getId() {
-    return id;
-  }
+	@JsonIgnore
+	@ManyToOne(fetch = FetchType.LAZY)
+	@Transient
+	private Survey survey;
 
-  public void setId(Long id) {
-    this.id = id;
-  }
+	@JsonIgnore
+	@JsonProperty("sectionIndex")
+	@Transient
+	public int getSectionIndex() {
 
-  public String getDescription() {
-    return description;
-  }
+		return survey.getQuestionSections().indexOf(this);
+	}
 
-  public void setDescription(String description) {
-    this.description = description;
-  }
+	public Long getId() {
 
-  public List<Question> getQuestions() {
-    return questions;
-  }
+		return id;
+	}
 
-  public void setQuestions(List<Question> questions) {
-    this.questions = questions;
-  }
+	public void setId(Long id) {
+
+		this.id = id;
+	}
+
+	public String getDescription() {
+
+		return description;
+	}
+
+	public void setDescription(String description) {
+
+		this.description = description;
+	}
+
+	public List<Question> getQuestions() {
+
+		return questions;
+	}
+
+	public void setQuestions(List<Question> questions) {
+
+		this.questions = questions;
+	}
 
 }

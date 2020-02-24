@@ -23,18 +23,13 @@ public class QuestionDaoImpl implements QuestionDao {
 		return entityManager.createQuery("from Question", Question.class).getResultList();
 	}
 
-	@SuppressWarnings("unchecked")
+
 	@Override
 	public List<Question> getSectionQuestions(Long sectionId) {
 
-		return (List<Question>) entityManager.createNativeQuery(
-				"select q.* "
-				+ "from question q join question_section_questions qS "
-				+ "on q.id = qS.questions_id "
-				+ "where qS.question_sections_id =:sectionId "
-				+ "order by qS.question_index ",
-				Question.class).setParameter("sectionId", sectionId).getResultList();
-		// return null;
+		return entityManager
+				.createQuery("from Question where question_section_id =:sectionId", Question.class)
+				.setParameter("sectionId", sectionId).getResultList();
 	}
 
 	@Override
@@ -47,13 +42,7 @@ public class QuestionDaoImpl implements QuestionDao {
 	@Override
 	public Question getSectionQuestion(Long sectionId, Long questionId) {
 
-		return (Question) entityManager.createNativeQuery(
-				"select q.* "
-				+ "from question q join question_section_questions qS "
-				+ "on q.id = qS.questions_id "
-				+ "where qS.question_sections_id =:sectionId and q.id = :questionId ",
-				Question.class).setParameter("sectionId", sectionId).setParameter("questionId", questionId)
-				.getSingleResult();
+		return entityManager.find(Question.class, questionId);
 	}
 
 	@Override
@@ -73,7 +62,7 @@ public class QuestionDaoImpl implements QuestionDao {
 
 	@Override
 	public Question isExist(String questionType, String questionDescription) {
-		
+
 		try {
 			return entityManager
 					.createQuery(
@@ -83,6 +72,55 @@ public class QuestionDaoImpl implements QuestionDao {
 					.setParameter("questionType", questionType).getSingleResult();
 		} catch (Exception ex) {
 			return null;
+		}
+	}
+
+
+	@Override
+	@Transactional
+	public Question updateQuestion(Long sectionId, Long index, Long questionId, Question question) {
+
+		Question existedQuestion = entityManager.find(Question.class, questionId);
+
+		if (existedQuestion.getDecriminatorValue() != question.getDecriminatorValue()) {
+
+			entityManager.remove(existedQuestion);
+
+			existedQuestion = entityManager.merge(question);
+
+			if (question.getDecriminatorValue().equals("MULTIPLE_CHOICE")
+					|| question.getDecriminatorValue().equals("RANKING"))
+				entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0;").executeUpdate();
+
+			entityManager.createNativeQuery(
+					"update question set id = :newId, question_section_id = :sectionId, question_index = :index where id = :oldId")
+					.setParameter("newId", questionId).setParameter("sectionId", sectionId)
+					.setParameter("index", index).setParameter("oldId", existedQuestion.getId())
+					.executeUpdate();
+
+			if (question.getDecriminatorValue().equals("MULTIPLE_CHOICE"))
+				entityManager
+						.createNativeQuery(
+								"update question_choices set question_id = :newId where question_id = :oldId")
+						.setParameter("index", index).setParameter("oldId", existedQuestion.getId())
+						.executeUpdate();
+
+			if (question.getDecriminatorValue().equals("RANKING")) {
+				entityManager.createNativeQuery(
+						"update question_ranking_choices set question_id = :newId where question_id = :oldId")
+						.setParameter("index", index).setParameter("oldId", existedQuestion.getId())
+						.executeUpdate();
+			}
+
+			if (question.getDecriminatorValue().equals("MULTIPLE_CHOICE")
+					|| question.getDecriminatorValue().equals("RANKING"))
+				entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1;").executeUpdate();
+
+			return entityManager.find(Question.class, questionId);
+
+		} else {
+			existedQuestion.updateQuestion(question);
+			return entityManager.merge(existedQuestion);
 		}
 	}
 

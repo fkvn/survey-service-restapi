@@ -1,4 +1,4 @@
-package survey.model.surveyresponse;
+package survey.model.response;
 
 import java.beans.Transient;
 import java.io.Serializable;
@@ -14,6 +14,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -52,15 +53,13 @@ public abstract class Answer implements Serializable {
 	@GeneratedValue
 	private Long id;
 
-	@ManyToOne
-	@JoinColumn(name = "answer_section_id", nullable = false)
-	private AnswerSection section;
-
 	@Column(name = "answer_index")
+//	@JsonIgnore
 	private int index;
 
 	@ManyToOne
 	@JoinColumn(name = "question_id")
+	@JsonIgnore
 	private Question question;
 	
 	
@@ -78,16 +77,6 @@ public abstract class Answer implements Serializable {
 	public void setId(Long id) {
 
 		this.id = id;
-	}
-
-	public AnswerSection getSection() {
-
-		return section;
-	}
-
-	public void setSection(AnswerSection section) {
-
-		this.section = section;
 	}
 
 	public int getIndex() {

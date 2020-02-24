@@ -13,4 +13,6 @@ public interface QuestionSectionDao {
 	public QuestionSection saveQuestionSection(QuestionSection questionSection);
 
 	public void removeQuestionSection(Long surveyId, Long id);
+
+	public void removeQuestionSection(Long id);
 }

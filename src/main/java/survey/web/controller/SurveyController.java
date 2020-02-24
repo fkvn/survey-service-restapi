@@ -3,7 +3,6 @@ package survey.web.controller;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import survey.model.core.dao.UserDao;
+import survey.model.response.Answer;
+import survey.model.response.SurveyResponse;
+import survey.model.response.dao.AnswerSectionDao;
+import survey.model.response.dao.SurveyResponseDao;
 import survey.model.survey.Question;
 import survey.model.survey.QuestionSection;
 import survey.model.survey.Survey;
@@ -47,6 +50,13 @@ public class SurveyController {
 
 	@Autowired
 	private QuestionDao questionDao;
+
+	@Autowired
+	private SurveyResponseDao surveyResponseDao;
+
+	@Autowired
+	private AnswerSectionDao answerSectionDao;
+
 
 	// Survey
 
@@ -86,7 +96,6 @@ public class SurveyController {
 		}
 
 		survey.setQuestionSections(new ArrayList<>());
-		survey.setQuestions(new HashSet<>());
 
 		survey = surveyDao.saveSurvey(survey);
 
@@ -136,6 +145,13 @@ public class SurveyController {
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteSurvey(@PathVariable Long id) {
+
+		Survey survey = surveyDao.getSurvey(id);
+
+		survey.getQuestionSections().forEach(qSection -> {
+			qSection.getQuestions().forEach(question -> questionDao.removeQuestion(question.getId()));
+			questionSectionDao.removeQuestionSection(qSection.getId());;
+		});
 
 		surveyDao.removeSurvey(id);
 	}
@@ -198,6 +214,12 @@ public class SurveyController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteSection(@PathVariable Long surveyId, @PathVariable Long sectionId) {
 
+		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
+
+		questionSection.getQuestions().forEach(question -> {
+			questionDao.removeQuestion(question.getId());
+		});
+
 		questionSectionDao.removeQuestionSection(surveyId, sectionId);
 	}
 
@@ -224,34 +246,27 @@ public class SurveyController {
 	public Long addQuestion(@PathVariable Long surveyId, @PathVariable Long sectionId,
 			@RequestBody Question question) {
 
-		Survey survey = surveyDao.getSurvey(surveyId);
 		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
 
-		Question ifExistedQuestion =
-				questionDao.isExist(question.getDecriminatorValue(), question.getDescription());
-		if (ifExistedQuestion == null) {
-			ifExistedQuestion = questionDao.saveQuestion(question);
-		}
+		question = questionDao.saveQuestion(question);
 
-		survey.getQuestions().add(ifExistedQuestion);
-		if (!questionSection.getQuestions().contains(ifExistedQuestion)) {
-			questionSection.getQuestions().add(ifExistedQuestion);
-			questionSectionDao.saveQuestionSection(questionSection);
-		}
+		questionSection.getQuestions().add(question);
+		questionSectionDao.saveQuestionSection(questionSection);
 
-		survey = surveyDao.saveSurvey(survey);
-
-		return ifExistedQuestion.getId();
+		return question.getId();
 	}
 
 	@PutMapping("/{surveyId}/sections/{sectionId}/questions/{questionId}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public Long editQuestion(@PathVariable Long questionId, @RequestBody Question question) {
+	public Long editQuestion(@PathVariable Long sectionId, @PathVariable Long questionId,
+			@RequestBody Question question) {
 
 		Question existedQuestion = questionDao.getQuestion(questionId);
+		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
 
-		existedQuestion.updateQuestion(question);
-		existedQuestion = questionDao.saveQuestion(existedQuestion);
+		Long questionIndex = (long) questionSection.getQuestions().indexOf(existedQuestion);
+
+		existedQuestion = questionDao.updateQuestion(sectionId, questionIndex, questionId, question);
 
 		return existedQuestion.getId();
 	}
@@ -263,13 +278,67 @@ public class SurveyController {
 
 		Question question = questionDao.getQuestion(questionId);
 		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
-		Survey survey = surveyDao.getSurvey(surveyId);
 
 		questionSection.getQuestions().remove(question);
 		questionSectionDao.saveQuestionSection(questionSection);
 
-		survey.getQuestions().remove(question);
-		surveyDao.saveSurvey(survey);
+		questionDao.removeQuestion(questionId);
 
 	}
+
+	// =================================================================
+
+	// Survey > Response
+
+	@GetMapping("/{surveyId}/responses")
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public List<SurveyResponse> getSurveyResponses(@PathVariable Long surveyId) {
+
+		return surveyResponseDao.getSurveyResponses(surveyId);
+	}
+
+	@PostMapping("/{surveyId}/responses")
+	@ResponseStatus(HttpStatus.CREATED)
+	public Long addSurveyResponse(@PathVariable Long surveyId, @RequestBody SurveyResponse response) {
+
+		Survey survey = surveyDao.getSurvey(surveyId);
+
+		response.setSurvey(survey);
+		response.setDate(new Date());
+		
+//		response.setAnswerSections(new ArrayList<>());
+		
+		response = surveyResponseDao.saveResponse(response);
+		
+		for (int i = 0;  i < response.getAnswerSections().size(); i++) {
+			int j = 0;
+			
+			for (Answer answer : response.getAnswerSections().get(i).getAnswers()) {
+				answer.setIndex(j);
+				answer.setQuestion(survey.getQuestionSections().get(i).getQuestions().get(j));
+				j++;
+			}
+			
+			response.getAnswerSections().get(i).setResponse(response);
+			response.getAnswerSections().get(i).setIndex(i);
+		}
+		
+		return surveyResponseDao.saveResponse(response).getId();
+	}
+
+	@GetMapping("/{surveyId}/responses/{responseId}")
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public SurveyResponse getSurveyResponse(@PathVariable Long responseId) {
+
+		return surveyResponseDao.getResponse(responseId);
+	}
+
+	@DeleteMapping("/{surveyId}/responses/{responseId}")
+	public void deleteSurveyResponse(@PathVariable Long responseId) {
+
+		surveyResponseDao.removeResponse(responseId);
+	}
+	
+	
+
 }
