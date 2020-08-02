@@ -8,6 +8,7 @@ import javax.transaction.Transactional;
 
 import org.springframework.stereotype.Repository;
 
+import survey.model.core.User;
 import survey.model.survey.Survey;
 import survey.model.survey.dao.SurveyDao;
 
@@ -18,15 +19,17 @@ public class SurveyDaoImpl implements SurveyDao {
 	private EntityManager entityManager;
 
 	@Override
-	public List<Survey> getAllSurveys() {
+	public List<Survey> getSurveys(User user) {
 
-		return entityManager.createQuery("from Survey", Survey.class).getResultList();
+		return entityManager.createQuery("from Survey where author.id =: userId", Survey.class)
+				.setParameter("userId", user.getId()).getResultList();
 	}
 
 	@Override
 	public List<Survey> getOpenSurveys() {
 
-		return entityManager.createQuery("from Survey where closed = :closed", Survey.class)
+		return entityManager
+				.createQuery("from Survey where closed = :closed and publishDate != null", Survey.class)
 				.setParameter("closed", false).getResultList();
 	}
 
@@ -57,4 +60,5 @@ public class SurveyDaoImpl implements SurveyDao {
 		Survey survey = entityManager.find(Survey.class, id);
 		entityManager.remove(survey);
 	}
+
 }

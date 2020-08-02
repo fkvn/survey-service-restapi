@@ -25,7 +25,7 @@ public class TextQuestion extends Question {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	@Column(name = "text_length", columnDefinition = "integer default 20")
+	@Column(name = "text_length")
 	@JsonView(Views.Public.class)
 	private int textLength;
 

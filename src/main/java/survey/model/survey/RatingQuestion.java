@@ -26,8 +26,8 @@ public class RatingQuestion extends Question {
 	private static final long serialVersionUID = 1L;
 
 	@JsonView(Views.Public.class)
-	@Column(name = "rating_scale", nullable = false, columnDefinition = "int default 0")
-	private int ratingScale;
+	@Column(name = "rating_scale", nullable = false, columnDefinition = "int default 5")
+	private int ratingScale = 5;
 
 	public int getRatingScale() {
 

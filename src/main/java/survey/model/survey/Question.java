@@ -1,6 +1,5 @@
 package survey.model.survey;
 
-import java.beans.Transient;
 import java.io.Serializable;
 import java.util.List;
 
@@ -12,11 +11,15 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
+import org.springframework.data.annotation.Transient;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -67,7 +70,19 @@ public abstract class Question implements Serializable {
 	@OrderBy("id asc")
 	private List<Answer> answers;
 
+	@JsonIgnore
+	@ManyToOne(fetch = FetchType.LAZY)
+	private QuestionSection questionSection;
+
+	@JsonProperty("questionIndex")
+	@JsonView(Views.Internal.class)
+	public int getQuestionIndex() {
+		return questionSection.getQuestions().indexOf(this);
+	}
+
 	@Transient
+	@JsonView(Views.Internal.class)
+	@JsonIgnore
 	public String getDecriminatorValue() {
 
 		return this.getClass().getAnnotation(DiscriminatorValue.class).value();

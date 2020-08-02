@@ -13,4 +13,6 @@ public interface UserDao {
 	public User saveUser(User user);
 
 	public void removeUser(long id);
+	
+
 }

@@ -17,14 +17,10 @@ import javax.persistence.OrderColumn;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-
 import io.swagger.annotations.ApiModelProperty;
 import survey.model.core.User;
 import survey.model.response.SurveyResponse;
@@ -40,7 +36,8 @@ import survey.util.Views;
 
 @Entity
 @Table(name = "survey")
-@JsonPropertyOrder({"id", "author","name", "type", "description", "createdDate", "publishDate", "closeDate", "closed", "numberOfSections"})
+@JsonPropertyOrder({ "id", "author", "name", "type", "description", "createdDate", "publishDate",
+		"closeDate", "closed", "numberOfSections" })
 public class Survey implements Serializable {
 
 	/**
@@ -52,77 +49,76 @@ public class Survey implements Serializable {
 	@Id
 	@GeneratedValue
 	@JsonView(Views.Public.class)
-	@ApiModelProperty(hidden=true)
+	@ApiModelProperty(hidden = true)
 	private Long id;
 
 	@Column(nullable = false)
 	@JsonView(Views.Public.class)
-	@ApiModelProperty(position=1, required = true)
+	@ApiModelProperty(position = 1, required = true)
 	private String name;
 
 	@Column(nullable = false)
 	@JsonView(Views.Public.class)
-	@ApiModelProperty(position=2)
+	@ApiModelProperty(position = 2)
 	private SurveyType type;
 
-	@Column(nullable = false)
-	@JsonView(Views.Public.class)
-	@ApiModelProperty(position=3)
+	@Column(nullable = true)
+	@JsonView(Views.Internal.class)
+	@ApiModelProperty(position = 3)
 	private String description;
 
 	@Column(name = "publish_date")
 	@JsonView(Views.Public.class)
-	@ApiModelProperty(position=5)
+	@ApiModelProperty(position = 5)
 	private Calendar publishDate;
 
 	@Column(name = "close_date")
 	@JsonView(Views.Public.class)
-	@ApiModelProperty(position=6)
+	@ApiModelProperty(position = 6)
 	private Calendar closeDate;
 
 	@Column(name = "created_date", nullable = false)
 	@JsonView(Views.Public.class)
-	@ApiModelProperty(position=4)
+	@ApiModelProperty(position = 4)
 	private Date createdDate;
 
 	@Column(nullable = false)
 	@JsonView(Views.Public.class)
-	@ApiModelProperty(position=7)
+	@ApiModelProperty(position = 7)
 	private boolean closed;
 
 	@ManyToOne
 	@JoinColumn(name = "author_id", nullable = false)
 	@JsonView(Views.Public.class)
-	@ApiModelProperty(hidden=true)
+	@ApiModelProperty(hidden = true)
 	private User author;
 
-	
+
 	@OneToMany(fetch = FetchType.EAGER)
 	@JoinColumn(name = "survey_id")
 	@OrderColumn(name = "section_index")
 	@JsonView(Views.Internal.class)
-  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-  @JsonIdentityReference(alwaysAsId = true)
-	@ApiModelProperty(hidden=true)
+//	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+//	@JsonIdentityReference(alwaysAsId = true)
+	@ApiModelProperty(hidden = true)
 	private List<QuestionSection> questionSections;
-	
-	@OneToMany(mappedBy="survey",fetch = FetchType.LAZY)
+
+	@OneToMany(mappedBy = "survey", fetch = FetchType.LAZY)
 	@JsonIgnore
-	@ApiModelProperty(hidden=true)
+	@ApiModelProperty(hidden = true)
 	private List<SurveyResponse> responses;
 
 	@JsonProperty("numberOfSections")
-	@JsonView(Views.Public.class)
-	@ApiModelProperty(hidden=true)
+	@JsonView(Views.Internal.class)
+	@ApiModelProperty(hidden = true)
 	@Transient
 	public int getNumOfSections() {
-
 		return questionSections.size();
 	}
-	
+
 	@JsonProperty("numberOfResponses")
 	@JsonView(Views.Public.class)
-	@ApiModelProperty(hidden=true)
+	@ApiModelProperty(hidden = true)
 	@Transient
 	public int getNumOfRespones() {
 

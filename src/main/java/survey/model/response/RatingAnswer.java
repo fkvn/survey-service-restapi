@@ -20,7 +20,7 @@ public class RatingAnswer extends Answer {
    */
   private static final long serialVersionUID = 1L;
 
-  private Integer rating;
+  private Integer rating = 0;
 
   public Integer getRating() {
     return rating;

@@ -1,6 +1,7 @@
 package survey.model.survey;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
@@ -38,16 +39,16 @@ public class MultipleChoiceQuestion extends Question {
 	@CollectionTable(name = "question_choices", joinColumns = @JoinColumn(name = "question_id"))
 	@Column(name = "choice", columnDefinition = "varchar(3000)")
 	@OrderColumn(name = "choice_index")
-//	@JsonView(Views.Public.class)
+	@JsonView(Views.Public.class)
 	private List<String> choices;
 
 	@Column(name = "min_selections", nullable = false, columnDefinition = "int default 1")
 //	@JsonView(Views.Public.class)
-	private int minSelections;
+	private int minSelections = 1;
 
 	@Column(name = "max_selections", nullable = false, columnDefinition = "int default 1")
 //	@JsonView(Views.Public.class)
-	private int maxSelections;
+	private int maxSelections = 1;
 
 	public List<String> getChoices() {
 

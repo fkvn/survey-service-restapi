@@ -12,6 +12,9 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * Class description.
  * 
@@ -34,24 +37,30 @@ public class File implements Serializable {
   private Long id;
 
   @Column(nullable = false)
+  @JsonIgnore
   private String name;
 
+  @JsonIgnore
   private String type;
+  
+  @JsonValue
+  private String url;
 
   private Long size;
 
   @Column(nullable = false)
+  @JsonIgnore
   private Date date;
 
   @ManyToOne(fetch = FetchType.LAZY)
+  @JsonIgnore
   @JoinColumn(nullable = false, name = "owner_id")
   private User owner;
 
   @Lob
+  @JsonIgnore
   @Column(name = "file_data")
   private byte[] fileData;
-
-  private String url;
 
   public Long getId() {
     return id;

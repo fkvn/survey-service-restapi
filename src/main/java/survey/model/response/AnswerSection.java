@@ -14,14 +14,17 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 import javax.persistence.Table;
-import javax.persistence.Transient;
+import org.springframework.data.annotation.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
+import survey.util.Views;
 
 
 /**
@@ -34,6 +37,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 @Entity
 @Table(name = "answer_section")
 @JsonPropertyOrder({"id", "responseId", "description"})
+@JsonView(Views.Internal.class)
 public class AnswerSection implements Serializable {
   /**
    * Default serialVersionUID.
@@ -46,27 +50,29 @@ public class AnswerSection implements Serializable {
   @GeneratedValue
   private Long id;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JsonIgnore
-  @Transient
   private SurveyResponse response;
 
-  @Column(name = "response_section_index", nullable = false)
-  @JsonIgnore
-  private int index;
+//  @Column(name = "response_section_index", nullable = false)
+//  private int index;
 
-  @OneToMany(cascade = CascadeType.MERGE)
+  @OneToMany(cascade = CascadeType.ALL)
   @JoinColumn(name = "answer_section_id")
   @OrderColumn(name = "answer_index")
   private List<Answer> answers;
   
-  @Transient
   @JsonProperty("description")
   private String description;
+ 
   
-  public void updateDescription() {
-  	this.setDescription(response.getSurvey().getQuestionSections().get(this.index).getDescription());
-  }
+	@JsonProperty("sectionIndex")
+	@Transient
+	@JsonView(Views.Public.class)
+	public int getAnswerSectionIndex() {
+
+		return response.getAnswerSections().indexOf(this);
+	}
 
   public Long getId() {
     return id;
@@ -84,13 +90,13 @@ public class AnswerSection implements Serializable {
     this.response = response;
   }
 
-  public int getIndex() {
-    return index;
-  }
-
-  public void setIndex(int index) {
-    this.index = index;
-  }
+//  public int getIndex() {
+//    return index;
+//  }
+//
+//  public void setIndex(int index) {
+//    this.index = index;
+//  }
 
   public List<Answer> getAnswers() {
     return answers;
@@ -109,16 +115,4 @@ public class AnswerSection implements Serializable {
 
 		this.description = description;
 	}
-
-//  @JsonIgnore
-//	private String getDescription() {
-//
-//		return description;
-//	}
-//
-//  @JsonIgnore
-//	private void setDescription(String description) {
-//
-//		this.description = description;
-//	}
 }

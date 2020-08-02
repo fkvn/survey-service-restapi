@@ -15,24 +15,29 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableSwagger2
 public class MainApplication {
 
-  public static void main(String[] args) {
-    SpringApplication.run(MainApplication.class, args);
-  }
-  
-  @Bean
+	public static void main(String[] args) {
+
+		SpringApplication.run(MainApplication.class, args);
+	}
+
+	@Bean
 	public WebMvcConfigurer corsConfigurer() {
+
 		return new WebMvcConfigurer() {
+
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
-				registry.addMapping("/**").allowedOrigins("*");
+
+				registry.addMapping("/**").allowedOrigins("*").allowedMethods("*");
 			}
 		};
 	}
-  
-  @Bean
-  public Docket productApi() {
-     return new Docket(DocumentationType.SWAGGER_2).select()
-        .apis(RequestHandlerSelectors.basePackage("survey.web.controller")).build();
-  }
+
+	@Bean
+	public Docket productApi() {
+
+		return new Docket(DocumentationType.SWAGGER_2).select()
+				.apis(RequestHandlerSelectors.basePackage("survey.web.controller")).build();
+	}
 
 }

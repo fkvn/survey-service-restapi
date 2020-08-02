@@ -1,25 +1,30 @@
 package survey.model.response;
 
-import java.beans.Transient;
+
 import java.io.Serializable;
 
-import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonView;
 
 import survey.model.survey.Question;
+import survey.util.Views;
 
 
 /**
@@ -41,6 +46,8 @@ import survey.model.survey.Question;
 
 })
 @DiscriminatorColumn(name = "answer_type")
+@JsonPropertyOrder({ "id", "description"})
+@JsonView(Views.Internal.class)
 public abstract class Answer implements Serializable {
 
 	/**
@@ -52,18 +59,29 @@ public abstract class Answer implements Serializable {
 	@Id
 	@GeneratedValue
 	private Long id;
+	
+	@JsonProperty("description")
+	private String description;
 
-	@Column(name = "answer_index")
-//	@JsonIgnore
-	private int index;
-
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "question_id")
 	@JsonIgnore
 	private Question question;
 	
 	
+	@JsonIgnore
+	@ManyToOne(fetch = FetchType.LAZY)
+	private AnswerSection answerSection;
+	
+	@JsonProperty("answerIndex")
+	@JsonView(Views.Internal.class)
+	public int getAnswerIndex() {
+		return answerSection.getAnswers().indexOf(this);
+	}
+
+
 	@Transient
+	@JsonIgnore
 	public String getDecriminatorValue() {
 
 		return this.getClass().getAnnotation(DiscriminatorValue.class).value();
@@ -79,23 +97,23 @@ public abstract class Answer implements Serializable {
 		this.id = id;
 	}
 
-	public int getIndex() {
-
-		return index;
-	}
-
-	public void setIndex(int index) {
-
-		this.index = index;
-	}
-
 	public Question getQuestion() {
 
 		return question;
 	}
 
-	public void setQuestion(Question question) {
+	public void setQuestion(Question question) {	
 
 		this.question = question;
+	}
+
+	public String getDescription() {
+
+		return description;
+	}
+
+	public void setDescription(String description) {
+
+		this.description = description;
 	}
 }

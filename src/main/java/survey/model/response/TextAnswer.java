@@ -24,7 +24,7 @@ public class TextAnswer extends Answer {
    */
   private static final long serialVersionUID = 1L;
 
-  private String text;
+  private String text = "";
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "attachment_id")

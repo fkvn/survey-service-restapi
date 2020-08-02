@@ -15,13 +15,9 @@ import javax.persistence.Table;
 
 import org.springframework.data.annotation.Transient;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-
 import survey.util.Views;
 
 /**
@@ -54,8 +50,8 @@ public class QuestionSection implements Serializable {
 	@OneToMany(fetch = FetchType.EAGER)
 	@JoinColumn(name = "question_section_id")
 	@OrderColumn(name = "question_index")
-  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-  @JsonIdentityReference(alwaysAsId = true)
+//  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+//  @JsonIdentityReference(alwaysAsId = true)
 	@JsonView(Views.Internal.class)
 	private List<Question> questions;
 
@@ -64,9 +60,9 @@ public class QuestionSection implements Serializable {
 	@Transient
 	private Survey survey;
 
-	@JsonIgnore
 	@JsonProperty("sectionIndex")
 	@Transient
+	@JsonView(Views.Public.class)
 	public int getSectionIndex() {
 
 		return survey.getQuestionSections().indexOf(this);

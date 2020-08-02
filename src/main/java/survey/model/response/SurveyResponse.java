@@ -7,6 +7,7 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -43,16 +44,19 @@ public class SurveyResponse implements Serializable {
   
   @Id
   @GeneratedValue
+  @JsonView(Views.Public.class)
   private Long id;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   @JsonIdentityReference(alwaysAsId = true)
+  @JsonView(Views.Public.class)
   private Survey survey;
 
-  @OneToMany(cascade = CascadeType.MERGE)
+  @OneToMany(cascade = CascadeType.ALL)
   @JoinColumn(name = "response_id")
   @OrderColumn(name = "response_section_index")
+  @JsonView(Views.Internal.class)
   private List<AnswerSection> answerSections;
   
 	@Column(nullable = false)

@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,13 +22,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
+import survey.exception.InvalidResponse;
+import survey.model.core.User;
 import survey.model.core.dao.UserDao;
 import survey.model.response.Answer;
+import survey.model.response.MultipleChoiceAnswer;
+import survey.model.response.RankingAnswer;
 import survey.model.response.SurveyResponse;
 import survey.model.response.dao.AnswerSectionDao;
 import survey.model.response.dao.SurveyResponseDao;
+import survey.model.survey.MultipleChoiceQuestion;
 import survey.model.survey.Question;
 import survey.model.survey.QuestionSection;
+import survey.model.survey.RankingQuestion;
 import survey.model.survey.Survey;
 import survey.model.survey.SurveyType;
 import survey.model.survey.dao.QuestionDao;
@@ -59,15 +66,8 @@ public class SurveyController {
 
 
 	// Survey
-
-	@JsonView(Views.Public.class)
-	@GetMapping
-	@ResponseStatus(HttpStatus.ACCEPTED)
-	public List<Survey> getSurveys() {
-
-		return surveyDao.getAllSurveys();
-	}
-
+	
+	// no need authorization
 	@GetMapping("/opened")
 	@JsonView(Views.Public.class)
 	@ResponseStatus(HttpStatus.ACCEPTED)
@@ -75,20 +75,34 @@ public class SurveyController {
 
 		return surveyDao.getOpenSurveys();
 	}
-
-	@GetMapping("/closed")
+ 
 	@JsonView(Views.Public.class)
+	@GetMapping
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public List<Survey> getClosedSurvey() {
-
-		return surveyDao.getClosedSurveys();
+	public List<Survey> getSurveys() {
+		
+		// has to change later if we want to do authorization
+		User user = userDao.getUser(1);
+		
+		return surveyDao.getSurveys(user);
 	}
+
+//	@GetMapping("/closed")
+//	@JsonView(Views.Public.class)
+//	@ResponseStatus(HttpStatus.ACCEPTED)
+//	public List<Survey> getClosedSurvey() {
+//
+//		return surveyDao.getClosedSurveys();
+//	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public Long addSurvey(@RequestBody Survey survey) {
-
-		survey.setAuthor(userDao.getUser(3));
+		
+		// has to change later if we want to do authorization
+		User user = userDao.getUser(1);
+		
+		survey.setAuthor(user);
 		survey.setCreatedDate(new Date());
 
 		if (survey.getType() == null) {
@@ -234,7 +248,7 @@ public class SurveyController {
 	}
 
 	@GetMapping("/{surveyId}/sections/{sectionId}/questions/{questionId}")
-	@JsonView(Views.Public.class)
+	@JsonView(Views.Internal.class)
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public Question getSectionQuestion(@PathVariable Long sectionId, @PathVariable Long questionId) {
 
@@ -292,6 +306,7 @@ public class SurveyController {
 
 	@GetMapping("/{surveyId}/responses")
 	@ResponseStatus(HttpStatus.ACCEPTED)
+	@JsonView(Views.Public.class)
 	public List<SurveyResponse> getSurveyResponses(@PathVariable Long surveyId) {
 
 		return surveyResponseDao.getSurveyResponses(surveyId);
@@ -305,29 +320,90 @@ public class SurveyController {
 
 		response.setSurvey(survey);
 		response.setDate(new Date());
-		
-//		response.setAnswerSections(new ArrayList<>());
-		
-		response = surveyResponseDao.saveResponse(response);
-		
-		for (int i = 0;  i < response.getAnswerSections().size(); i++) {
-			int j = 0;
-			
-			for (Answer answer : response.getAnswerSections().get(i).getAnswers()) {
-				answer.setIndex(j);
-				answer.setQuestion(survey.getQuestionSections().get(i).getQuestions().get(j));
-				j++;
-			}
-			
-			response.getAnswerSections().get(i).setResponse(response);
-			response.getAnswerSections().get(i).setIndex(i);
+
+		// don't have the same section as survey
+		if (response.getAnswerSections() == null
+				|| response.getAnswerSections().size() != survey.getQuestionSections().size()) {
+			throw new InvalidResponse("The total sections were not match!");
 		}
-		
+		// correct #ofSections
+		else {
+			for (int sectionIndex = 0; sectionIndex < response.getAnswerSections()
+					.size(); sectionIndex++) {
+
+				// not the same order of section Or don't have the same #ofanswer for each section
+				if (survey.getQuestionSections().get(sectionIndex).getSectionIndex() != sectionIndex
+						|| response.getAnswerSections().get(sectionIndex).getAnswers().size() != survey
+								.getQuestionSections().get(sectionIndex).getQuestions().size()) {
+					throw new InvalidResponse("Unmatched number of answers!");
+				} else {
+
+					// answerSection description
+					response.getAnswerSections().get(sectionIndex)
+							.setDescription(survey.getQuestionSections().get(sectionIndex).getDescription());
+
+					int answerIndex = 0;
+					for (Answer answer : response.getAnswerSections().get(sectionIndex).getAnswers()) {
+
+						Question question =
+								survey.getQuestionSections().get(sectionIndex).getQuestions().get(answerIndex);
+
+						// unmatched between answer and question
+						if (answerIndex != question.getQuestionIndex()
+								|| !answer.getDecriminatorValue().equals(question.getDecriminatorValue())) {
+							throw new InvalidResponse("Unmatched answer!");
+						} else {
+							// type requirements
+							switch (answer.getDecriminatorValue()) {
+								case "MULTIPLE_CHOICE":
+									Set<Integer> answerSelections = ((MultipleChoiceAnswer) answer).getSelections();
+									List<String> questionChoice = ((MultipleChoiceQuestion) question).getChoices();
+ 									int minSelections = ((MultipleChoiceQuestion) question).getMinSelections();
+									int maxSelections = ((MultipleChoiceQuestion) question).getMaxSelections();
+									
+									
+									if (answerSelections.size() > maxSelections
+											|| answerSelections.size() < minSelections) {
+										throw new InvalidResponse("Unmatched number of selections!");
+									}
+
+									answerSelections.forEach((selection) -> {
+										if (selection > questionChoice.size() - 1) {
+											throw new InvalidResponse("Unmatched selections!");
+										}
+									});
+
+									break;
+
+								case "RANKING":
+									if (((RankingAnswer) answer).getSelectionRanks()
+											.size() != ((RankingQuestion) question).getRankingChoices().size()) {
+										throw new InvalidResponse("Unmatched ranking answer!");
+									}
+									break;
+
+								default:
+									break;
+
+							}
+
+
+							answer.setDescription(question.getDescription());
+							answer.setQuestion(question);
+						}
+						answerIndex++;
+					}
+				}
+			}
+		}
+
 		return surveyResponseDao.saveResponse(response).getId();
+
 	}
 
 	@GetMapping("/{surveyId}/responses/{responseId}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
+	@JsonView(Views.Internal.class)
 	public SurveyResponse getSurveyResponse(@PathVariable Long responseId) {
 
 		return surveyResponseDao.getResponse(responseId);
@@ -338,7 +414,7 @@ public class SurveyController {
 
 		surveyResponseDao.removeResponse(responseId);
 	}
-	
-	
+
+
 
 }
