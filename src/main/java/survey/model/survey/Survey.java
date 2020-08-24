@@ -17,10 +17,12 @@ import javax.persistence.OrderColumn;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
+
 import io.swagger.annotations.ApiModelProperty;
 import survey.model.core.User;
 import survey.model.response.SurveyResponse;
@@ -70,12 +72,12 @@ public class Survey implements Serializable {
 	@Column(name = "publish_date")
 	@JsonView(Views.Public.class)
 	@ApiModelProperty(position = 5)
-	private Calendar publishDate;
+	private Date publishDate;
 
 	@Column(name = "close_date")
 	@JsonView(Views.Public.class)
 	@ApiModelProperty(position = 6)
-	private Calendar closeDate;
+	private Date closeDate;
 
 	@Column(name = "created_date", nullable = false)
 	@JsonView(Views.Public.class)
@@ -85,7 +87,7 @@ public class Survey implements Serializable {
 	@Column(nullable = false)
 	@JsonView(Views.Public.class)
 	@ApiModelProperty(position = 7)
-	private boolean closed;
+	private boolean closed = true; 
 
 	@ManyToOne
 	@JoinColumn(name = "author_id", nullable = false)
@@ -165,22 +167,22 @@ public class Survey implements Serializable {
 		this.description = description;
 	}
 
-	public Calendar getPublishDate() {
+	public Date getPublishDate() {
 
 		return publishDate;
 	}
 
-	public void setPublishDate(Calendar publishDate) {
+	public void setPublishDate(Date publishDate) {
 
 		this.publishDate = publishDate;
 	}
 
-	public Calendar getCloseDate() {
+	public Date getCloseDate() {
 
 		return closeDate;
 	}
 
-	public void setCloseDate(Calendar closeDate) {
+	public void setCloseDate(Date closeDate) {
 
 		this.closeDate = closeDate;
 	}

@@ -1,11 +1,14 @@
 package survey.model.survey;
 
+import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
+import survey.model.core.File;
 import survey.util.Views;
 
 /**
@@ -17,6 +20,7 @@ import survey.util.Views;
 
 @Entity
 @DiscriminatorValue("TEXT")
+@JsonView(Views.Public.class)
 public class TextQuestion extends Question {
 
 	/**
@@ -54,10 +58,11 @@ public class TextQuestion extends Question {
 	}
 
 	@Override
-	public void updateQuestion(Question question) {
+	public void updateQuestion(Question question, List<File> files) {
 		this.setDescription(question.getDescription());
 		this.setTextLength(((TextQuestion) question).getTextLength());
 		this.setAttachmentAllowed(((TextQuestion) question).isAttachmentAllowed());
+		this.setAttachments(files);
 	}
 
 

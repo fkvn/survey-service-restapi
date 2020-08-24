@@ -1,7 +1,10 @@
 package survey.model.core;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -11,6 +14,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -26,105 +31,128 @@ import com.fasterxml.jackson.annotation.JsonValue;
 @Table(name = "file")
 public class File implements Serializable {
 
-  /**
-   * Default serialVersionUID.
-   * 
-   */
-  private static final long serialVersionUID = 1L;
+	/**
+	 * Default serialVersionUID.
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-  @Id
-  @GeneratedValue
-  private Long id;
+	@Id
+	@GeneratedValue
+	private Long id;
 
-  @Column(nullable = false)
-  @JsonIgnore
-  private String name;
+	@Column(nullable = false)
+	@JsonIgnore
+	private String name;
 
-  @JsonIgnore
-  private String type;
-  
-  @JsonValue
-  private String url;
+	@JsonIgnore
+	private String type;
 
-  private Long size;
+	@JsonValue
+	private String url;
 
-  @Column(nullable = false)
-  @JsonIgnore
-  private Date date;
+	@JsonIgnore
+	private Long size;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JsonIgnore
-  @JoinColumn(nullable = false, name = "owner_id")
-  private User owner;
+	@Column(nullable = false)
+	@JsonIgnore
+	private Date date;
 
-  @Lob
-  @JsonIgnore
-  @Column(name = "file_data")
-  private byte[] fileData;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JsonIgnore
+	@JoinColumn(nullable = false, name = "owner_id")
+	private User owner;
 
-  public Long getId() {
-    return id;
-  }
+	@Lob
+	@JsonIgnore
+	@Column(name = "file_data")
+	private byte[] fileData;
 
-  public void setId(Long id) {
-    this.id = id;
-  }
+	public Long getId() {
 
-  public String getName() {
-    return name;
-  }
+		return id;
+	}
 
-  public void setName(String name) {
-    this.name = name;
-  }
+	public void setId(Long id) {
 
-  public String getType() {
-    return type;
-  }
+		this.id = id;
+	}
 
-  public void setType(String type) {
-    this.type = type;
-  }
+	public String getName() {
 
-  public Long getSize() {
-    return size;
-  }
+		return name;
+	}
 
-  public void setSize(Long size) {
-    this.size = size;
-  }
+	public void setName(String name) {
 
-  public Date getDate() {
-    return date;
-  }
+		this.name = name;
+	}
 
-  public void setDate(Date date) {
-    this.date = date;
-  }
+	public String getType() {
 
-  public User getOwner() {
-    return owner;
-  }
+		return type;
+	}
 
-  public void setOwner(User owner) {
-    this.owner = owner;
-  }
+	public void setType(String type) {
 
-  public byte[] getFileData() {
-    return fileData;
-  }
+		this.type = type;
+	}
 
-  public void setFileData(byte[] fileData) {
-    this.fileData = fileData;
-  }
+	public Long getSize() {
 
-  public String getUrl() {
-    return url;
-  }
+		return size;
+	}
 
-  public void setUrl(String url) {
-    this.url = url;
-  }
+	public void setSize(Long size) {
 
+		this.size = size;
+	}
+
+	public Date getDate() {
+
+		return date;
+	}
+
+	public void setDate(Date date) {
+
+		this.date = date;
+	}
+
+	public User getOwner() {
+
+		return owner;
+	}
+
+	public void setOwner(User owner) {
+
+		this.owner = owner;
+	}
+
+	public byte[] getFileData() {
+
+		return fileData;
+	}
+
+	public void setFileData(byte[] fileData) {
+
+		this.fileData = fileData;
+	}
+
+	public String getUrl() {
+
+		return url;
+	}
+
+	public void setUrl(String url) {
+
+		this.url = url;
+	}
+
+	public boolean equalTo(File file) {
+
+		return Comparator.comparing(File::getName).thenComparing(File::getType)
+				.thenComparing(File::getSize).compare(this, file) == 0
+				&& Arrays.equals(this.getFileData(), file.getFileData());
+	}
 
 }

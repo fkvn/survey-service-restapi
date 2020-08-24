@@ -65,7 +65,7 @@ public class QuestionSection implements Serializable {
 	@JsonView(Views.Public.class)
 	public int getSectionIndex() {
 
-		return survey.getQuestionSections().indexOf(this);
+		return getSurvey().getQuestionSections().indexOf(this);
 	}
 
 	public Long getId() {
@@ -96,6 +96,16 @@ public class QuestionSection implements Serializable {
 	public void setQuestions(List<Question> questions) {
 
 		this.questions = questions;
+	}
+
+	public Survey getSurvey() {
+
+		return survey;
+	}
+
+	public void setSurvey(Survey survey) {
+
+		this.survey = survey;
 	}
 
 }

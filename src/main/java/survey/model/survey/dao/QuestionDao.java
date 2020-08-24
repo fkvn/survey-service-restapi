@@ -2,7 +2,11 @@ package survey.model.survey.dao;
 
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import survey.model.core.File;
 import survey.model.survey.Question;
+// import survey.model.survey.dao.jpa.File;
 
 public interface QuestionDao {
 
@@ -12,11 +16,12 @@ public interface QuestionDao {
 
 	public Question getQuestion(Long id);
 
-	public Question getSectionQuestion(Long sectionId, Long questionId);
+	public Question getSectionQuestion(Long surveyId, Long sectionId, Long questionId);
 
 	public Question saveQuestion(Question question);
-	
-	public Question updateQuestion(Long sectionId, Long index, Long questionId, Question question);
+
+	public Question updateQuestion(Long sectionId, Long index, Long questionId, Question question,
+			List<File> files);
 
 	public Question isExist(String questionType, String questionDescription);
 

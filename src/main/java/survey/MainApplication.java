@@ -28,7 +28,7 @@ public class MainApplication {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 
-				registry.addMapping("/**").allowedOrigins("*").allowedMethods("*");
+				registry.addMapping("/**").allowedOrigins("*").allowedMethods("*").exposedHeaders("Content-Disposition");
 			}
 		};
 	}

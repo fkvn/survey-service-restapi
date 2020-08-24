@@ -1,7 +1,6 @@
 package survey.model.survey;
 
 import java.util.List;
-import java.util.Set;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
@@ -14,6 +13,7 @@ import javax.persistence.OrderColumn;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
+import survey.model.core.File;
 import survey.util.Views;
 
 /**
@@ -85,11 +85,12 @@ public class MultipleChoiceQuestion extends Question {
 	}
 
 	@Override
-	public void updateQuestion(Question question) {
+	public void updateQuestion(Question question, List<File> files) {
 		this.setDescription(question.getDescription());
 		this.setChoices(((MultipleChoiceQuestion) question).getChoices());
 		this.setMaxSelections(((MultipleChoiceQuestion) question).getMaxSelections());
 		this.setMinSelections(((MultipleChoiceQuestion) question).getMinSelections());
+		this.setAttachments(files);
 	}
 
 }

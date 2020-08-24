@@ -1,7 +1,8 @@
 package survey.web.controller;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -17,13 +18,22 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import survey.exception.AddingQuestionError;
 import survey.exception.InvalidResponse;
+import survey.exception.UpdatingQuestionError;
+import survey.exception.UpdatingSurveyError;
+import survey.model.core.File;
 import survey.model.core.User;
+import survey.model.core.dao.FileDao;
 import survey.model.core.dao.UserDao;
 import survey.model.response.Answer;
 import survey.model.response.MultipleChoiceAnswer;
@@ -53,6 +63,9 @@ public class SurveyController {
 	private UserDao userDao;
 
 	@Autowired
+	private FileDao fileDao;
+
+	@Autowired
 	private QuestionSectionDao questionSectionDao;
 
 	@Autowired
@@ -66,7 +79,7 @@ public class SurveyController {
 
 
 	// Survey
-	
+
 	// no need authorization
 	@GetMapping("/opened")
 	@JsonView(Views.Public.class)
@@ -75,33 +88,33 @@ public class SurveyController {
 
 		return surveyDao.getOpenSurveys();
 	}
- 
+
 	@JsonView(Views.Public.class)
 	@GetMapping
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public List<Survey> getSurveys() {
-		
+
 		// has to change later if we want to do authorization
 		User user = userDao.getUser(1);
-		
+
 		return surveyDao.getSurveys(user);
 	}
 
-//	@GetMapping("/closed")
-//	@JsonView(Views.Public.class)
-//	@ResponseStatus(HttpStatus.ACCEPTED)
-//	public List<Survey> getClosedSurvey() {
-//
-//		return surveyDao.getClosedSurveys();
-//	}
+	// @GetMapping("/closed")
+	// @JsonView(Views.Public.class)
+	// @ResponseStatus(HttpStatus.ACCEPTED)
+	// public List<Survey> getClosedSurvey() {
+	//
+	// return surveyDao.getClosedSurveys();
+	// }
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public Long addSurvey(@RequestBody Survey survey) {
-		
+
 		// has to change later if we want to do authorization
 		User user = userDao.getUser(1);
-		
+
 		survey.setAuthor(user);
 		survey.setCreatedDate(new Date());
 
@@ -129,6 +142,7 @@ public class SurveyController {
 	public Long editSurvey(@PathVariable Long id, @RequestBody Map<String, Object> surveyInfo) {
 
 		Survey survey = surveyDao.getSurvey(id);
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 		for (String key : surveyInfo.keySet()) {
 			switch (key) {
@@ -139,10 +153,22 @@ public class SurveyController {
 					survey.setDescription((String) surveyInfo.get(key));
 					break;
 				case "publishDate":
-					survey.setPublishDate((Calendar) surveyInfo.get(key));
+					Date publisedDate = null;
+					try {
+						publisedDate = formatter.parse((String) surveyInfo.get(key));
+					} catch (ParseException e) {
+						throw new UpdatingSurveyError(e.getLocalizedMessage());
+					}
+					survey.setPublishDate(publisedDate);
 					break;
 				case "closeDate":
-					survey.setCloseDate((Calendar) surveyInfo.get(key));
+					Date closeDate = null;
+					try {
+						closeDate = formatter.parse((String) surveyInfo.get(key));
+					} catch (ParseException e) {
+						throw new UpdatingSurveyError(e.getLocalizedMessage());
+					}
+					survey.setCloseDate(closeDate);
 					break;
 				case "closed":
 					survey.setClosed((boolean) surveyInfo.get(key));
@@ -163,7 +189,12 @@ public class SurveyController {
 		Survey survey = surveyDao.getSurvey(id);
 
 		survey.getQuestionSections().forEach(qSection -> {
-			qSection.getQuestions().forEach(question -> questionDao.removeQuestion(question.getId()));
+			qSection.getQuestions().forEach(question -> {
+				question.getAttachments().forEach(file -> {
+					fileDao.deleteFile(((File) file).getId(), userDao.getUser(1));
+				});
+				questionDao.removeQuestion(question.getId());
+			});
 			questionSectionDao.removeQuestionSection(qSection.getId());;
 		});
 
@@ -231,6 +262,9 @@ public class SurveyController {
 		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
 
 		questionSection.getQuestions().forEach(question -> {
+			question.getAttachments().forEach(file -> {	
+				fileDao.deleteFile(file.getId(), userDao.getUser(1));
+			});
 			questionDao.removeQuestion(question.getId());
 		});
 
@@ -250,51 +284,158 @@ public class SurveyController {
 	@GetMapping("/{surveyId}/sections/{sectionId}/questions/{questionId}")
 	@JsonView(Views.Internal.class)
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public Question getSectionQuestion(@PathVariable Long sectionId, @PathVariable Long questionId) {
+	public Question getSectionQuestion(@PathVariable Long surveyId, @PathVariable Long sectionId,
+			@PathVariable Long questionId) {
 
-		return questionDao.getSectionQuestion(sectionId, questionId);
+		return questionDao.getSectionQuestion(surveyId, sectionId, questionId);
 	}
 
 	@PostMapping("/{surveyId}/sections/{sectionId}/questions")
 	@ResponseStatus(HttpStatus.CREATED)
 	public Long addQuestion(@PathVariable Long surveyId, @PathVariable Long sectionId,
-			@RequestBody Question question) {
+			@RequestPart("question") String strQuestion,
+			@RequestPart(value = "files", required = false) MultipartFile[] files) {
 
-		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
+		ObjectMapper mapper = new ObjectMapper();
+		// System.out.println("before convert");
+		// System.out.println(strQuestion.isEmpty());
 
-		question = questionDao.saveQuestion(question);
+		try {
+			// System.out.println("trying convert");
+			Question question = mapper.readValue(strQuestion, Question.class);
+			// System.out.println(question.getDecriminatorValue());
+			// System.out.println("after convert");
+			QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
 
-		questionSection.getQuestions().add(question);
-		questionSectionDao.saveQuestionSection(questionSection);
+			// has to change later if we want to do authorization
+			User user = userDao.getUser(1);
 
-		return question.getId();
+			// uploading file process
+			if (files != null && files.length > 0) {
+				try {
+					// file validation
+
+					// System.out.println(files.length);
+					// System.out.println(files[0].isEmpty());
+					// System.out.println(files[1].isEmpty());
+					for (int i = 0; i < files.length; i++) {
+						if (!files[i].isEmpty()
+								&& !files[i].getContentType().split("/")[0].trim().equals("image")) {
+							throw new AddingQuestionError(
+									"Uploaded files are not supported!!! Only Image file type can be uploaded!");
+						}
+					}
+
+					// generate question attachment lists (if null)
+					if (question.getAttachments() == null) {
+						question.setAttachments(new ArrayList<File>());
+					}
+
+					// uploading files and add to the question attachment lists
+					for (int i = 0; i < files.length; i++) {
+						if (!files[i].isEmpty()) {
+							File newFile = fileDao.uploadFile(files[i], user);
+							// System.out.println(newFile);
+							// System.out.println(newFile.getName());
+
+							question.getAttachments().add(newFile);
+						}
+					}
+
+				} catch (Exception e) {
+					throw new AddingQuestionError(e.getLocalizedMessage());
+				}
+			}
+
+			// System.out.println("here");
+
+			// adding question to database
+			question = questionDao.saveQuestion(question);
+			// System.out.println(question.getId());
+
+			questionSection.getQuestions().add(question);
+			questionSectionDao.saveQuestionSection(questionSection);
+
+			return question.getId();
+
+		} catch (JsonProcessingException e) {
+			throw new AddingQuestionError(e.getLocalizedMessage());
+		}
+
 	}
 
 	@PutMapping("/{surveyId}/sections/{sectionId}/questions/{questionId}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public Long editQuestion(@PathVariable Long sectionId, @PathVariable Long questionId,
-			@RequestBody Question question) {
+			@RequestPart("question") String strQuestion,
+			@RequestPart(value = "files", required = false) MultipartFile[] files) {
 
-		Question existedQuestion = questionDao.getQuestion(questionId);
-		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
+		ObjectMapper mapper = new ObjectMapper();
+		try {
 
-		Long questionIndex = (long) questionSection.getQuestions().indexOf(existedQuestion);
+			Question question = mapper.readValue(strQuestion, Question.class);
 
-		existedQuestion = questionDao.updateQuestion(sectionId, questionIndex, questionId, question);
+			// has to change later if we want to do authorization
+			User user = userDao.getUser(1);
 
-		return existedQuestion.getId();
+			// genrating files
+			List<File> newFiles = new ArrayList<File>();
+			if (files != null && files.length > 0) {
+				try {
+					for (int i = 0; i < files.length; i++) {
+						if (!files[i].isEmpty()
+								&& !files[i].getContentType().split("/")[0].trim().equals("image")) {
+							throw new Exception(
+									"Uploaded files are not supported!!! Only Image file type can be uploaded!");
+						}
+					}
+
+					// uploading files and add to the question attachment lists
+					for (int i = 0; i < files.length; i++) {
+						if (!files[i].isEmpty()) {
+							File newFile = fileDao.uploadFile(files[i], user);
+							newFiles.add(newFile);
+						}
+					}
+
+				} catch (Exception e) {
+					throw new UpdatingQuestionError(e.getLocalizedMessage());
+				}
+			}
+
+
+			Question existedQuestion = questionDao.getQuestion(questionId);
+			QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
+
+			Long questionIndex = (long) questionSection.getQuestions().indexOf(existedQuestion);
+			existedQuestion =
+					questionDao.updateQuestion(sectionId, questionIndex, questionId, question, newFiles);
+			return existedQuestion.getId();
+
+		} catch (JsonProcessingException e) {
+			throw new UpdatingQuestionError(e.getLocalizedMessage());
+		}
 	}
 
 	@DeleteMapping("/{surveyId}/sections/{sectionId}/questions/{questionId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteQuestion(@PathVariable Long surveyId, @PathVariable Long sectionId,
-			@PathVariable Long questionId) {
+			@PathVariable Long questionId) throws Exception {
 
 		Question question = questionDao.getQuestion(questionId);
 		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
 
+		if (question == null || questionSection.getSurvey().getId() != surveyId) {
+			throw new Exception("Unsuccessful delete question!");
+		}
+
+
 		questionSection.getQuestions().remove(question);
 		questionSectionDao.saveQuestionSection(questionSection);
+
+		question.getAttachments().forEach(file -> {
+			fileDao.deleteFile(((File) file).getId(), userDao.getUser(1));
+		});
 
 		questionDao.removeQuestion(questionId);
 
@@ -358,10 +499,10 @@ public class SurveyController {
 								case "MULTIPLE_CHOICE":
 									Set<Integer> answerSelections = ((MultipleChoiceAnswer) answer).getSelections();
 									List<String> questionChoice = ((MultipleChoiceQuestion) question).getChoices();
- 									int minSelections = ((MultipleChoiceQuestion) question).getMinSelections();
+									int minSelections = ((MultipleChoiceQuestion) question).getMinSelections();
 									int maxSelections = ((MultipleChoiceQuestion) question).getMaxSelections();
-									
-									
+
+
 									if (answerSelections.size() > maxSelections
 											|| answerSelections.size() < minSelections) {
 										throw new InvalidResponse("Unmatched number of selections!");
@@ -414,7 +555,5 @@ public class SurveyController {
 
 		surveyResponseDao.removeResponse(responseId);
 	}
-
-
 
 }

@@ -8,5 +8,7 @@ import survey.model.core.User;
 public interface FileDao {
 	File uploadFile(MultipartFile file, User user);
 
-	File getFile(int file_id);
+	File getFile(Long fileId);
+	
+	void deleteFile(Long fileId, User user);
 }

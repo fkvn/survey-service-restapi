@@ -3,6 +3,7 @@ package survey.model.survey;
 import java.io.Serializable;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorValue;
@@ -25,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import survey.model.core.File;
 import survey.model.response.Answer;
 import survey.util.Views;
 
@@ -61,7 +63,7 @@ public abstract class Question implements Serializable {
 	@JsonView(Views.Public.class)
 	private Long id;
 
-	@Column(nullable = false)
+	@Column(nullable = false, columnDefinition="TEXT")
 	@JsonView(Views.Public.class)
 	private String description;
 
@@ -77,8 +79,11 @@ public abstract class Question implements Serializable {
 	@JsonProperty("questionIndex")
 	@JsonView(Views.Internal.class)
 	public int getQuestionIndex() {
-		return questionSection.getQuestions().indexOf(this);
+		return getQuestionSection().getQuestions().indexOf(this);
 	}
+	
+  @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+  private List<File> attachments;
 
 	@Transient
 	@JsonView(Views.Internal.class)
@@ -118,6 +123,26 @@ public abstract class Question implements Serializable {
 		this.answers = answers;
 	}
 
-	public abstract void updateQuestion(Question question);
+	public List<File> getAttachments() {
+
+		return attachments;
+	}
+
+	public void setAttachments(List<File> attachments) {
+
+		this.attachments = attachments;
+	}
+	
+	public abstract void updateQuestion(Question question, List<File> files);
+
+	public QuestionSection getQuestionSection() {
+
+		return questionSection;
+	}
+
+	public void setQuestionSection(QuestionSection questionSection) {
+
+		this.questionSection = questionSection;
+	}
 
 }

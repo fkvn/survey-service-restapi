@@ -1,11 +1,14 @@
 package survey.model.survey;
 
+import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
+import survey.model.core.File;
 import survey.util.Views;
 
 /**
@@ -40,9 +43,10 @@ public class RatingQuestion extends Question {
 	}
 
 	@Override
-	public void updateQuestion(Question question) {
+	public void updateQuestion(Question question, List<File> files) {
 		this.setDescription(question.getDescription());
 		this.setRatingScale(((RatingQuestion) question).getRatingScale());
+		this.setAttachments(files);
 	}
 
 }

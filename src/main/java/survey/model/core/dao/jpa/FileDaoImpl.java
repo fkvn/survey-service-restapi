@@ -25,7 +25,7 @@ public class FileDaoImpl implements FileDao {
 	@Override
 	@Transactional
 	public File uploadFile(MultipartFile file, User user) {
-
+		System.out.println("uploading files");
 		String fileName = StringUtils.cleanPath(file.getOriginalFilename());
 
 		try {
@@ -42,7 +42,7 @@ public class FileDaoImpl implements FileDao {
 				newFile = entityManager.merge(newFile);
 
 				String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-						.path("/downloadFile/").path(String.valueOf(newFile.getId())).toUriString();
+						.path("/api/files/").path(String.valueOf(newFile.getId())).toUriString();
 
 				newFile.setUrl(fileDownloadUri);
 
@@ -58,9 +58,15 @@ public class FileDaoImpl implements FileDao {
 	}
 
 	@Override
-	public File getFile(int file_id) {
+	public File getFile(Long fileId) {
 
-		return entityManager.find(File.class, file_id);
+		return entityManager.find(File.class, fileId);
+	}
+
+	@Override
+	@Transactional
+	public void deleteFile(Long fileId, User user) {
+		entityManager.remove(entityManager.find(File.class, fileId));
 	}
 
 }
