@@ -20,6 +20,7 @@ import survey.util.Views;
 
 @Entity
 @DiscriminatorValue("RATING")
+@JsonView(Views.Public.class)
 public class RatingQuestion extends Question {
 
 	/**

@@ -31,7 +31,7 @@ public class TextQuestion extends Question {
 
 	@Column(name = "text_length")
 	@JsonView(Views.Public.class)
-	private int textLength;
+	private int textLength = -1;
 
 	@Column(name = "attachment_allowed", columnDefinition = "boolean default false", nullable = false)
 	@JsonView(Views.Public.class)

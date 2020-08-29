@@ -42,10 +42,20 @@ public class QuestionDaoImpl implements QuestionDao {
 
 	@Override
 	public Question getSectionQuestion(Long surveyId, Long sectionId, Long questionId) {
-
+		System.out.println(surveyId);
+		System.out.println(sectionId);
+		System.out.println(questionId);
+		
+		
 		Question question = entityManager.find(Question.class, questionId);
-		if (question.getQuestionSection().getId() == sectionId
-				&& question.getQuestionSection().getSurvey().getId() == surveyId) {
+		System.out.println(question.getQuestionSection().getSurvey().getId());
+		System.out.println(question.getQuestionSection().getId());
+		
+		System.out.println(question.getQuestionSection().getSurvey().getId().equals(surveyId));
+		System.out.println(question.getQuestionSection().getId() == sectionId);
+		
+		if (question.getQuestionSection().getId().equals(sectionId)
+				&& question.getQuestionSection().getSurvey().getId().equals(surveyId)) {
 
 			return entityManager.find(Question.class, questionId);
 		}
