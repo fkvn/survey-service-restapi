@@ -42,13 +42,13 @@ public class MultipleChoiceQuestion extends Question {
 	@JsonView(Views.Public.class)
 	private List<String> choices;
 
-	@Column(name = "min_selections", nullable = false, columnDefinition = "int default 1")
+	@Column(name = "min_selections", nullable = false, columnDefinition = "int default 0")
 //	@JsonView(Views.Public.class)
-	private int minSelections = 1;
+	private int minSelections = 0;
 
-	@Column(name = "max_selections", nullable = false, columnDefinition = "int default 1")
+	@Column(name = "max_selections", nullable = false, columnDefinition = "int default 0")
 //	@JsonView(Views.Public.class)
-	private int maxSelections = 1;
+	private int maxSelections = 0;
 
 	public List<String> getChoices() {
 

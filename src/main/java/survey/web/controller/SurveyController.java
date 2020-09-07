@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,9 +37,11 @@ import survey.model.core.User;
 import survey.model.core.dao.FileDao;
 import survey.model.core.dao.UserDao;
 import survey.model.response.Answer;
+import survey.model.response.AnswerSection;
 import survey.model.response.MultipleChoiceAnswer;
 import survey.model.response.RankingAnswer;
 import survey.model.response.SurveyResponse;
+import survey.model.response.dao.AnswerDao;
 import survey.model.response.dao.AnswerSectionDao;
 import survey.model.response.dao.SurveyResponseDao;
 import survey.model.survey.MultipleChoiceQuestion;
@@ -76,6 +79,9 @@ public class SurveyController {
 
 	@Autowired
 	private AnswerSectionDao answerSectionDao;
+
+	@Autowired
+	private AnswerDao answerDao;
 
 
 	// Survey
@@ -188,6 +194,16 @@ public class SurveyController {
 
 		Survey survey = surveyDao.getSurvey(id);
 
+		survey.getResponses().forEach(res -> {
+			res.getAnswerSections().forEach(ansSection -> {
+				ansSection.getAnswers().forEach(ans -> {
+					answerDao.removeAnswer(((Answer) ans).getId());
+				});
+				answerSectionDao.removeAnswerSection(((AnswerSection) ansSection).getId());
+			});
+			surveyResponseDao.removeResponse(((SurveyResponse) res).getId());
+		});
+
 		survey.getQuestionSections().forEach(qSection -> {
 			qSection.getQuestions().forEach(question -> {
 				question.getAttachments().forEach(file -> {
@@ -197,6 +213,7 @@ public class SurveyController {
 			});
 			questionSectionDao.removeQuestionSection(qSection.getId());;
 		});
+
 
 		surveyDao.removeSurvey(id);
 	}
@@ -262,7 +279,7 @@ public class SurveyController {
 		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
 
 		questionSection.getQuestions().forEach(question -> {
-			question.getAttachments().forEach(file -> {	
+			question.getAttachments().forEach(file -> {
 				fileDao.deleteFile(file.getId(), userDao.getUser(1));
 			});
 			questionDao.removeQuestion(question.getId());
@@ -425,7 +442,7 @@ public class SurveyController {
 		Question question = questionDao.getQuestion(questionId);
 		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
 
-		if (question == null || questionSection.getSurvey().getId() != surveyId) {
+		if (question == null || !questionSection.getSurvey().getId().equals(surveyId)) {
 			throw new Exception("Unsuccessful delete question!");
 		}
 
@@ -502,7 +519,10 @@ public class SurveyController {
 									int minSelections = ((MultipleChoiceQuestion) question).getMinSelections();
 									int maxSelections = ((MultipleChoiceQuestion) question).getMaxSelections();
 
-
+									if (answerSelections == null) {
+										answerSelections = new HashSet<Integer>();
+									}
+									
 									if (answerSelections.size() > maxSelections
 											|| answerSelections.size() < minSelections) {
 										throw new InvalidResponse("Unmatched number of selections!");

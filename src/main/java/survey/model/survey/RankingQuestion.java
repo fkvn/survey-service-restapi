@@ -25,6 +25,7 @@ import survey.util.Views;
 
 @Entity
 @DiscriminatorValue("RANKING")
+@JsonView(Views.Public.class)
 public class RankingQuestion extends Question {
 
 	/**
@@ -34,7 +35,7 @@ public class RankingQuestion extends Question {
 	private static final long serialVersionUID = 1L;
 
 	
-	@JsonView(Views.Public.class)
+	
 	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "question_ranking_choices",
 			joinColumns = @JoinColumn(name = "question_id"))

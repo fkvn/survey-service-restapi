@@ -42,18 +42,10 @@ public class QuestionDaoImpl implements QuestionDao {
 
 	@Override
 	public Question getSectionQuestion(Long surveyId, Long sectionId, Long questionId) {
-		System.out.println(surveyId);
-		System.out.println(sectionId);
-		System.out.println(questionId);
-		
-		
+
+
 		Question question = entityManager.find(Question.class, questionId);
-		System.out.println(question.getQuestionSection().getSurvey().getId());
-		System.out.println(question.getQuestionSection().getId());
-		
-		System.out.println(question.getQuestionSection().getSurvey().getId().equals(surveyId));
-		System.out.println(question.getQuestionSection().getId() == sectionId);
-		
+
 		if (question.getQuestionSection().getId().equals(sectionId)
 				&& question.getQuestionSection().getSurvey().getId().equals(surveyId)) {
 
@@ -99,7 +91,6 @@ public class QuestionDaoImpl implements QuestionDao {
 	public Question updateQuestion(Long sectionId, Long index, Long questionId, Question question,
 			List<File> files) {
 
-		System.out.println(index);
 		try {
 
 			Question existedQuestion = entityManager.find(Question.class, questionId);

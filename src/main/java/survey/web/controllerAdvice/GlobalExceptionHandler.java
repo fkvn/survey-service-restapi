@@ -69,7 +69,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 	@ExceptionHandler({UserNotFoundException.class})
 	protected ResponseEntity<Object> hanlderCustomExceptions(Exception ex, WebRequest request) {
-		System.out.println("aaa " + ex.getCause().getMessage());
 		
 		ex.printStackTrace();
 

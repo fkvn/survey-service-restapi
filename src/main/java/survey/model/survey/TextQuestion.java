@@ -35,7 +35,7 @@ public class TextQuestion extends Question {
 
 	@Column(name = "attachment_allowed", columnDefinition = "boolean default false", nullable = false)
 	@JsonView(Views.Public.class)
-	private boolean attachmentAllowed;
+	private boolean attachmentAllowed = false;
 
 	public int getTextLength() {
 
