@@ -29,6 +29,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import survey.exception.AddingQuestionError;
+import survey.exception.BadRequest;
 import survey.exception.InvalidResponse;
 import survey.exception.UpdatingQuestionError;
 import survey.exception.UpdatingSurveyError;
@@ -271,6 +272,25 @@ public class SurveyController {
 		questionSection = questionSectionDao.saveQuestionSection(questionSection);
 		return questionSection.getId();
 	}
+	
+	@PutMapping("/{surveyId}/sections/{sectionId}/index")
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public void updateSectionIndex(@PathVariable Long surveyId, @PathVariable Long sectionId,
+			@RequestBody Map<String, Object> requestInfo) {
+
+		QuestionSection section = questionSectionDao.getQuestionSection(sectionId);
+		int oldIndex = section.getSectionIndex();
+		int newIndex = (int) requestInfo.get("index");
+
+//		System.out.println(surveyId);
+//		System.out.println(sectionId);
+//		System.out.println(oldIndex);
+//		System.out.println(newIndex);
+
+		surveyDao.moveSectionInSurvey(surveyId, oldIndex, newIndex);
+
+	}
+
 
 	@DeleteMapping("/{surveyId}/sections/{sectionId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
@@ -278,12 +298,17 @@ public class SurveyController {
 
 		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
 
-		questionSection.getQuestions().forEach(question -> {
-			question.getAttachments().forEach(file -> {
-				fileDao.deleteFile(file.getId(), userDao.getUser(1));
+		if (questionSection.getQuestions().size() > 0) {
+
+			questionSection.getQuestions().forEach(question -> {
+				if (question != null) {
+					question.getAttachments().forEach(file -> {
+						fileDao.deleteFile(file.getId(), userDao.getUser(1));
+					});
+					questionDao.removeQuestion(question.getId());
+				}
 			});
-			questionDao.removeQuestion(question.getId());
-		});
+		}
 
 		questionSectionDao.removeQuestionSection(surveyId, sectionId);
 	}
@@ -294,6 +319,8 @@ public class SurveyController {
 	@JsonView(Views.Public.class)
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public List<Question> getSectionQuestions(@PathVariable Long sectionId) {
+
+		// QuestionSection qSection = ques
 
 		return questionDao.getSectionQuestions(sectionId);
 	}
@@ -434,6 +461,25 @@ public class SurveyController {
 		}
 	}
 
+	@PutMapping("/{surveyId}/sections/{sectionId}/questions/{questionId}/index")
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public void updateQuestionIndex(@PathVariable Long surveyId, @PathVariable Long sectionId,
+			@PathVariable Long questionId, @RequestBody Map<String, Object> requestInfo) {
+
+		Question question = questionDao.getQuestion(questionId);
+		int oldIndex = question.getQuestionIndex();
+		int newIndex = (int) requestInfo.get("index");
+
+		System.out.println(surveyId);
+		System.out.println(sectionId);
+		System.out.println(oldIndex);
+		System.out.println(newIndex);
+
+		questionSectionDao.moveQuestionInSections(surveyId, sectionId, oldIndex, newIndex);
+
+	}
+
+
 	@DeleteMapping("/{surveyId}/sections/{sectionId}/questions/{questionId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteQuestion(@PathVariable Long surveyId, @PathVariable Long sectionId,
@@ -522,7 +568,7 @@ public class SurveyController {
 									if (answerSelections == null) {
 										answerSelections = new HashSet<Integer>();
 									}
-									
+
 									if (answerSelections.size() > maxSelections
 											|| answerSelections.size() < minSelections) {
 										throw new InvalidResponse("Unmatched number of selections!");

@@ -29,7 +29,7 @@ public class QuestionDaoImpl implements QuestionDao {
 	public List<Question> getSectionQuestions(Long sectionId) {
 
 		return entityManager
-				.createQuery("from Question where question_section_id =:sectionId", Question.class)
+				.createQuery("from Question where question_section_id =:sectionId ORDER BY question_index", Question.class)
 				.setParameter("sectionId", sectionId).getResultList();
 	}
 

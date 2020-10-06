@@ -77,7 +77,7 @@ public abstract class Question implements Serializable {
 	private QuestionSection questionSection;
 
 	@JsonProperty("questionIndex")
-	@JsonView(Views.Internal.class)
+	@JsonView(Views.Public.class)
 	public int getQuestionIndex() {
 		return getQuestionSection().getQuestions().indexOf(this);
 	}
