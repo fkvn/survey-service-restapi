@@ -515,6 +515,14 @@ public class SurveyController {
 
 		return surveyResponseDao.getSurveyResponses(surveyId);
 	}
+	
+	@GetMapping("/{surveyId}/allresponses")
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	@JsonView(Views.Public.class)
+	public List<SurveyResponse> getSurveyResponsesAll(@PathVariable Long surveyId) {
+
+		return surveyResponseDao.getSurveyResponsesAll(surveyId);
+	}
 
 	@PostMapping("/{surveyId}/responses")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -617,9 +625,16 @@ public class SurveyController {
 	}
 
 	@DeleteMapping("/{surveyId}/responses/{responseId}")
-	public void deleteSurveyResponse(@PathVariable Long responseId) {
-
-		surveyResponseDao.removeResponse(responseId);
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void deleteSurveyResponse(@PathVariable Long surveyId, @PathVariable Long responseId) {
+		SurveyResponse response = surveyResponseDao.getResponse(responseId);
+		
+		if (!response.getSurvey().getId().equals(surveyId))
+			throw new BadRequest("The response doesn't not belong to the given survey!");
+		
+		response.setDeleted(true);
+		
+		surveyResponseDao.saveResponse(response);
 	}
 
 }

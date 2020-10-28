@@ -18,12 +18,23 @@ public class SurveyResponseDaoImpl implements SurveyResponseDao {
 	private EntityManager entityManager;
 
 	@Override
-	public List<SurveyResponse> getSurveyResponses(Long surveyId) {
+	public List<SurveyResponse> getSurveyResponsesAll(Long surveyId) {
 
 		return entityManager
 				.createQuery("from SurveyResponse where survey.id =:surveyId", SurveyResponse.class)
 				.setParameter("surveyId", surveyId).getResultList();
 	}
+	
+	@Override
+	public List<SurveyResponse> getSurveyResponses(Long surveyId) {
+		
+		return entityManager
+				.createQuery("from SurveyResponse where survey.id =:surveyId and isDeleted = false", SurveyResponse.class)
+				.setParameter("surveyId", surveyId).getResultList();
+		
+//		return null;
+	}
+
 
 	@Override
 	public SurveyResponse getResponse(Long id) {
@@ -44,5 +55,6 @@ public class SurveyResponseDaoImpl implements SurveyResponseDao {
 		SurveyResponse surveyResponse = entityManager.find(SurveyResponse.class, id);
 		entityManager.remove(surveyResponse);
 	}
+
 
 }

@@ -60,7 +60,7 @@ public class QuestionSectionDaoImpl implements QuestionSectionDao {
 	}
 
 	@Override
-	// @Transactional
+	 @Transactional
 	public QuestionSection moveQuestionInSections(Long surveyId, Long sectionId, int oldIndex,
 			int newIndex) {
 
@@ -114,8 +114,8 @@ public class QuestionSectionDaoImpl implements QuestionSectionDao {
 //			System.out.println(q.getQuestionIndex() + " -" + q.getId());
 //		});
 
-		return null;
-		// return entityManager.merge(section);
+//		return null;
+		 return entityManager.merge(section);
 
 	}
 

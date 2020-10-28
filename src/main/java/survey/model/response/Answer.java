@@ -2,6 +2,7 @@ package survey.model.response;
 
 
 import java.io.Serializable;
+import java.util.List;
 
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorValue;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import survey.model.core.File;
 import survey.model.survey.Question;
 import survey.util.Views;
 
@@ -77,6 +79,11 @@ public abstract class Answer implements Serializable {
 	@JsonView(Views.Internal.class)
 	public int getAnswerIndex() {
 		return answerSection.getAnswers().indexOf(this);
+	}
+	
+	@JsonView(Views.Internal.class)
+	public List<File> getAttachments() {
+		return question.getAttachments();
 	}
 
 

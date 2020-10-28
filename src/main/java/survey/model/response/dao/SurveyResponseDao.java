@@ -6,6 +6,8 @@ import survey.model.response.SurveyResponse;
 
 public interface SurveyResponseDao {
 
+	List<SurveyResponse> getSurveyResponsesAll(Long surveyId);
+	
 	List<SurveyResponse> getSurveyResponses(Long surveyId);
 	
 	SurveyResponse getResponse(Long id);

@@ -18,11 +18,12 @@ import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import survey.model.survey.Survey;
+import survey.model.survey.SurveyType;
 import survey.util.Views;
 
 /**
@@ -34,6 +35,7 @@ import survey.util.Views;
 
 @Entity
 @Table(name = "survey_responses")
+@JsonPropertyOrder({"id", "survey", "type", "date", "isDeleted"})
 public class SurveyResponse implements Serializable {
   /**
    * Default serialVersionUID.
@@ -58,6 +60,9 @@ public class SurveyResponse implements Serializable {
   @OrderColumn(name = "response_section_index")
   @JsonView(Views.Internal.class)
   private List<AnswerSection> answerSections;
+  
+  @JsonView(Views.Public.class)
+  private boolean isDeleted = false;
   
 	@Column(nullable = false)
 	@JsonView(Views.Public.class)
@@ -95,5 +100,20 @@ public class SurveyResponse implements Serializable {
 	public void setDate(Date date) {
 
 		this.date = date;
+	}
+
+	public boolean isDeleted() {
+
+		return isDeleted;
+	}
+
+	public void setDeleted(boolean isDeleted) {
+
+		this.isDeleted = isDeleted;
+	}
+	
+	@JsonView(Views.Public.class)
+	public SurveyType getType() {
+		return this.getSurvey().getType();
 	}
 }
