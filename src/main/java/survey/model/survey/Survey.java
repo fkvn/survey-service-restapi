@@ -1,7 +1,7 @@
 package survey.model.survey;
 
 import java.io.Serializable;
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -17,7 +17,6 @@ import javax.persistence.OrderColumn;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -229,6 +228,19 @@ public class Survey implements Serializable {
 
 	public List<SurveyResponse> getResponses() {
 
+		return responses;
+	}
+	
+	public List<SurveyResponse> getAvailResponses() {
+		
+		List<SurveyResponse> responses = new ArrayList<>();
+		
+		for (SurveyResponse response : this.responses) {
+			if (!response.isDeleted()) {
+				responses.add(response);
+			}
+		}
+		
 		return responses;
 	}
 

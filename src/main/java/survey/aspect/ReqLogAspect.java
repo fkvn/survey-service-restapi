@@ -1,5 +1,6 @@
 package survey.aspect;
 
+import lombok.extern.slf4j.Slf4j;
 import javax.servlet.http.HttpServletRequest;
 
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -8,8 +9,6 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Aspect
 @Configuration
@@ -30,7 +29,7 @@ public class ReqLogAspect {
 		} catch (Throwable throwable) {
 			throw throwable;
 		} finally {
-			log.info("{} {}", request.getMethod(), request.getRequestURI());
+//			log.info("{} {}", request.getMethod(), request.getRequestURI());
 		}
 
 		return value;

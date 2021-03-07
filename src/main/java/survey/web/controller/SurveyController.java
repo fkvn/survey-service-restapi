@@ -4,15 +4,23 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.codec.binary.Base64;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+// import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import survey.exception.AddingQuestionError;
 import survey.exception.BadRequest;
 import survey.exception.InvalidResponse;
+import survey.exception.SurveyNotFoundException;
 import survey.exception.UpdatingQuestionError;
 import survey.exception.UpdatingSurveyError;
 import survey.model.core.File;
@@ -45,6 +54,13 @@ import survey.model.response.SurveyResponse;
 import survey.model.response.dao.AnswerDao;
 import survey.model.response.dao.AnswerSectionDao;
 import survey.model.response.dao.SurveyResponseDao;
+import survey.model.statistic.MultipleChoiceQRS;
+import survey.model.statistic.QuestionResultSummary;
+import survey.model.statistic.RankingQRS;
+import survey.model.statistic.RatingQRS;
+import survey.model.statistic.TextQRS;
+import survey.model.statistic.dao.QuestionResultSummaryDao;
+import survey.model.statistic.dao.ResponseGroupDao;
 import survey.model.survey.MultipleChoiceQuestion;
 import survey.model.survey.Question;
 import survey.model.survey.QuestionSection;
@@ -84,14 +100,60 @@ public class SurveyController {
 	@Autowired
 	private AnswerDao answerDao;
 
+	@Autowired
+	private QuestionResultSummaryDao qResultSummaryDao;
+
+	@Autowired
+	private ResponseGroupDao resGroupDao;
+
+
+	// get sub from access_token
+	private String getSub(HttpServletRequest request) throws ParseException {
+
+		if (request.getHeader("Authorization") == null
+				|| request.getHeader("Authorization").length() == 0)
+			return "";
+		String token = request.getHeader("Authorization").split(" ")[1]; // get jwt from header
+		String encodedPayload = token.split("\\.")[1]; // get second encoded part in jwt
+		Base64 base64Url = new Base64(true);
+		String payload = new String(base64Url.decode(encodedPayload));
+
+		JSONParser parser = new JSONParser();
+		JSONObject claimsObj = null;
+		try {
+			claimsObj = (JSONObject) parser.parse(payload);
+		} catch (org.json.simple.parser.ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return claimsObj.get("sub").toString();
+	}
 
 	// Survey
 
 	// no need authorization
-	@GetMapping("/opened")
+	@GetMapping("/open")
 	@JsonView(Views.Public.class)
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public List<Survey> getOpenSurvey() {
+	// public List<Survey> getOpenSurvey(HttpServletRequest request) throws ParseException {
+	// System.out.println("open");
+	//
+	// String sub = getSub(request);
+	// if (sub == null || sub.length() == 0)
+	// throw new AccessDeniedException("403 returned");
+	//
+	// System.out.println(sub);
+	//
+	// return surveyDao.getOpenSurveys();
+	// }
+	public List<Survey> getOpenSurvey(@ModelAttribute("sub") String sub) throws ParseException {
+
+		System.out.println("open with sub from controller Advice");
+
+//		if (sub == null || sub.length() == 0)
+//			throw new AccessDeniedException("403 returned");
+
+		System.out.println(sub);
 
 		return surveyDao.getOpenSurveys();
 	}
@@ -119,15 +181,20 @@ public class SurveyController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public Long addSurvey(@RequestBody Survey survey) {
 
-		// has to change later if we want to do authorization
+		//
+		System.out.println("here");
+		// // has to change later if we want to do authorization
 		User user = userDao.getUser(1);
 
 		survey.setAuthor(user);
 		survey.setCreatedDate(new Date());
 
+		System.out.println(survey.getName());
+
 		if (survey.getType() == null) {
 			survey.setType(SurveyType.ANONYMOUS);
 		}
+
 
 		survey.setQuestionSections(new ArrayList<>());
 
@@ -140,6 +207,12 @@ public class SurveyController {
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	@JsonView(Views.Internal.class)
 	public Survey getSurvey(@PathVariable Long id) {
+
+		Survey survey = surveyDao.getSurvey(id);
+		System.out.println(survey == null);
+
+		if (survey == null)
+			throw new SurveyNotFoundException();
 
 		return surveyDao.getSurvey(id);
 	}
@@ -221,6 +294,26 @@ public class SurveyController {
 
 	// Survey > Section
 
+	@GetMapping("/{surveyId}/questionResultSummaries")
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	@JsonView(Views.Public.class)
+	public Map<Long, Object> getSurveyQRS(@PathVariable Long surveyId) {
+
+		Survey survey = surveyDao.getSurvey(surveyId);
+		Map<Long, Object> surveyQRS = new HashMap<>();
+
+		survey.getQuestionSections().forEach(sec -> {
+
+			surveyQRS.put(sec.getId(), getAllQRSFromSection(sec));
+
+		});
+
+
+		return surveyQRS;
+	}
+
+	// Survey > Section
+
 	@JsonView(Views.Public.class)
 	@GetMapping("/{surveyId}/sections")
 	@ResponseStatus(HttpStatus.ACCEPTED)
@@ -272,7 +365,7 @@ public class SurveyController {
 		questionSection = questionSectionDao.saveQuestionSection(questionSection);
 		return questionSection.getId();
 	}
-	
+
 	@PutMapping("/{surveyId}/sections/{sectionId}/index")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public void updateSectionIndex(@PathVariable Long surveyId, @PathVariable Long sectionId,
@@ -282,10 +375,10 @@ public class SurveyController {
 		int oldIndex = section.getSectionIndex();
 		int newIndex = (int) requestInfo.get("index");
 
-//		System.out.println(surveyId);
-//		System.out.println(sectionId);
-//		System.out.println(oldIndex);
-//		System.out.println(newIndex);
+		// System.out.println(surveyId);
+		// System.out.println(sectionId);
+		// System.out.println(oldIndex);
+		// System.out.println(newIndex);
 
 		surveyDao.moveSectionInSurvey(surveyId, oldIndex, newIndex);
 
@@ -504,6 +597,84 @@ public class SurveyController {
 
 	}
 
+
+	// Survey > Section > questionResultSummary
+
+	@GetMapping("/{surveyId}/sections/{sectionId}/questionResultSummaries")
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	@JsonView(Views.Public.class)
+	public Map<Long, QuestionResultSummary> getSectionQRS(@PathVariable Long sectionId) {
+
+		QuestionSection section = questionSectionDao.getQuestionSection(sectionId);
+
+		System.out.println("Section: " + section.getId());
+		return getAllQRSFromSection(section);
+	}
+
+
+	public Map<Long, QuestionResultSummary> getAllQRSFromSection(QuestionSection section) {
+
+		Map<Long, QuestionResultSummary> qResultSummaries = new HashMap<>();
+
+		List<Question> questions = section.getQuestions();
+
+		questions.forEach(q -> {
+			Question question = q;
+
+			System.out.println("isNull: " + question.getId());
+
+			QuestionResultSummary qResultSummary =
+					qResultSummaryDao.getQuestionResultSummaryByQuestionId(question.getId());
+
+
+
+			if (qResultSummary != null) {
+				qResultSummary.updateResultSummary();
+			}
+
+			else {
+
+				switch (question.getDecriminatorValue()) {
+					case "MULTIPLE_CHOICE": {
+						System.out.println("mc: " + question.getId());
+						qResultSummary =
+								new MultipleChoiceQRS(question.getQuestionSection().getSurvey(), question);
+					}
+						break;
+
+					case "RANKING": {
+						qResultSummary = new RankingQRS(question.getQuestionSection().getSurvey(), question);
+					}
+						break;
+
+					case "RATING": {
+						qResultSummary = new RatingQRS(question.getQuestionSection().getSurvey(), question);
+					}
+						break;
+
+					case "TEXT": {
+						qResultSummary = new TextQRS(question.getQuestionSection().getSurvey(), question);
+					}
+						break;
+
+					default:
+						break;
+				}
+			}
+
+
+			if (qResultSummary != null) {
+				qResultSummary = qResultSummaryDao.saveQuestionResultSummary(qResultSummary);
+			}
+
+			qResultSummaries.put(question.getId(), qResultSummary);
+
+
+		});
+		return qResultSummaries;
+
+	}
+
 	// =================================================================
 
 	// Survey > Response
@@ -515,7 +686,7 @@ public class SurveyController {
 
 		return surveyResponseDao.getSurveyResponses(surveyId);
 	}
-	
+
 	@GetMapping("/{surveyId}/allresponses")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	@JsonView(Views.Public.class)
@@ -627,14 +798,20 @@ public class SurveyController {
 	@DeleteMapping("/{surveyId}/responses/{responseId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteSurveyResponse(@PathVariable Long surveyId, @PathVariable Long responseId) {
+
 		SurveyResponse response = surveyResponseDao.getResponse(responseId);
-		
+
 		if (!response.getSurvey().getId().equals(surveyId))
 			throw new BadRequest("The response doesn't not belong to the given survey!");
-		
+
 		response.setDeleted(true);
-		
+
 		surveyResponseDao.saveResponse(response);
 	}
+
+	// =================================================================
+
+	// Survey > Response
+
 
 }

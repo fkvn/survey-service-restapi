@@ -1,11 +1,16 @@
 package survey.web.controllerAdvice;
 
+import java.text.ParseException;
 import java.util.Iterator;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
+import org.apache.commons.codec.binary.Base64;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,15 +20,45 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import survey.exception.UserNotFoundException;
+import survey.model.core.User;
 import survey.util.ApiError;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+	@ModelAttribute("sub")
+	protected String extractUserFromJWT(HttpServletRequest request) throws ParseException {
+
+		if (request.getHeader("Authorization") == null
+				|| request.getHeader("Authorization").length() == 0)
+			return "";
+		String token = request.getHeader("Authorization").split(" ")[1]; // get jwt from header
+		String encodedPayload = token.split("\\.")[1]; // get second encoded part in jwt
+		Base64 base64Url = new Base64(true);
+		String payload = new String(base64Url.decode(encodedPayload));
+ 
+		System.out.println("Controller Advice");
+		System.out.println(payload);
+		
+		JSONParser parser = new JSONParser();
+		JSONObject claimsObj = null;
+		try {
+			claimsObj = (JSONObject) parser.parse(payload);
+		} catch (org.json.simple.parser.ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		System.out.println(claimsObj.toJSONString());
+		
+		return claimsObj.get("sub").toString();
+	}
 
 	@ExceptionHandler({ TransactionSystemException.class, DataIntegrityViolationException.class })
 	protected ResponseEntity<Object> handleConstraintViolationExceptions(Exception ex,
@@ -67,16 +102,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<Object>(apiError, new HttpHeaders(), apiError.getStatus());
 	}
 
-	@ExceptionHandler({UserNotFoundException.class})
+	@ExceptionHandler({ UserNotFoundException.class })
 	protected ResponseEntity<Object> hanlderCustomExceptions(Exception ex, WebRequest request) {
-		
+
 		ex.printStackTrace();
 
 		ApiError apiError = new ApiError();
 
 		if (ex.getClass().equals(UserNotFoundException.class))
 			apiError.setStatus(HttpStatus.NOT_FOUND);
-		
+
 		else
 			apiError.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
 
@@ -88,19 +123,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 
 
-//	@ExceptionHandler
-//	protected ResponseEntity<Object> handleExceptions(Exception ex, WebRequest request) {
-//		System.out.println("aaa " + ex.getClass().getSimpleName());
-//		ex.printStackTrace();
-//		
-//		ApiError apiError = new ApiError();
-//		apiError.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
-//		apiError.setError(ex.getCause().getLocalizedMessage());
-//		
-//		apiError.setPath(request.getDescription(true).split(";")[0].split("=")[1]);
-//		apiError.setMessage("aa: " + ex.getLocalizedMessage());
-//		
-//		return new ResponseEntity<Object>(apiError, new HttpHeaders(), apiError.getStatus());
-//	}
+	// @ExceptionHandler
+	// protected ResponseEntity<Object> handleExceptions(Exception ex, WebRequest request) {
+	// System.out.println("aaa " + ex.getClass().getSimpleName());
+	// ex.printStackTrace();
+	//
+	// ApiError apiError = new ApiError();
+	// apiError.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+	// apiError.setError(ex.getCause().getLocalizedMessage());
+	//
+	// apiError.setPath(request.getDescription(true).split(";")[0].split("=")[1]);
+	// apiError.setMessage("aa: " + ex.getLocalizedMessage());
+	//
+	// return new ResponseEntity<Object>(apiError, new HttpHeaders(), apiError.getStatus());
+	// }
 
 }

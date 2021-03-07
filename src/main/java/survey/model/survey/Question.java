@@ -14,6 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import survey.model.core.File;
 import survey.model.response.Answer;
+import survey.model.statistic.QuestionResultSummary;
 import survey.util.Views;
 
 
@@ -70,6 +72,7 @@ public abstract class Question implements Serializable {
 	@JsonIgnore
 	@OneToMany(mappedBy = "question", fetch = FetchType.LAZY)
 	@OrderBy("id asc")
+//	@JsonView(Views.Internal.class)
 	private List<Answer> answers;
 
 	@JsonIgnore
@@ -84,6 +87,10 @@ public abstract class Question implements Serializable {
 	
   @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   private List<File> attachments;
+  
+//  @OneToOne(optional=true)
+//  @JsonIgnore
+//  private QuestionResultSummary qResultSummary;
 
 	@Transient
 	@JsonView(Views.Internal.class)
@@ -144,5 +151,15 @@ public abstract class Question implements Serializable {
 
 		this.questionSection = questionSection;
 	}
+//
+//	public QuestionResultSummary getqResultSummary() {
+//
+//		return qResultSummary;
+//	}
+//
+//	public void setqResultSummary(QuestionResultSummary qResultSummary) {
+//
+//		this.qResultSummary = qResultSummary;
+//	}
 
 }

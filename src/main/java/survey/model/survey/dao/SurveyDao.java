@@ -20,4 +20,5 @@ public interface SurveyDao {
 	public Survey moveSectionInSurvey(Long surveyId, int oldIndex, int newIndex);
 
 	public void removeSurvey(long id);
+
 }

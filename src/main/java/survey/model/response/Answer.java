@@ -78,7 +78,7 @@ public abstract class Answer implements Serializable {
 	@JsonProperty("answerIndex")
 	@JsonView(Views.Internal.class)
 	public int getAnswerIndex() {
-		return answerSection.getAnswers().indexOf(this);
+		return getAnswerSection().getAnswers().indexOf(this);
 	}
 	
 	@JsonView(Views.Internal.class)
@@ -122,5 +122,15 @@ public abstract class Answer implements Serializable {
 	public void setDescription(String description) {
 
 		this.description = description;
+	}
+
+	public AnswerSection getAnswerSection() {
+
+		return answerSection;
+	}
+
+	public void setAnswerSection(AnswerSection answerSection) {
+
+		this.answerSection = answerSection;
 	}
 }

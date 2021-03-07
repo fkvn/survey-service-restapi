@@ -32,17 +32,17 @@ public class RankingAnswer extends Answer {
 
 	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "answer_ranking_selection", joinColumns = @JoinColumn(name = "answer_id"))
-	@Column(name = "selection_rank")
+	@Column(name = "selectionIndex_rank")
 	@MapKeyColumn(name = "ranking")
 	@Id
-	private Map<Integer, String> selectionRanks;
+	private Map<Integer, Integer> selectionRanks;
 
-	public Map<Integer, String> getSelectionRanks() {
+	public Map<Integer, Integer> getSelectionRanks() {
 
 		return selectionRanks;
 	}
 
-	public void setSelectionRanks(Map<Integer, String> selectionRanks) {
+	public void setSelectionRanks(Map<Integer, Integer> selectionRanks) {
 
 		this.selectionRanks = selectionRanks;
 	}
