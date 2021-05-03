@@ -10,8 +10,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,6 +47,9 @@ public class FileController {
 
 		// Load file from database
 		File file = fileDao.getFile(file_id);
+		
+//		if (!file.getOwnerId().equals(sub))
+//			throw new AccessDeniedException("403 returned");
 
 		return ResponseEntity.ok().contentType(MediaType.parseMediaType(file.getType()))
 				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
@@ -53,29 +58,32 @@ public class FileController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public Map<String, String> uploadFile(
+	public Map<String, String> uploadFile(@ModelAttribute("sub") String sub,
 			@RequestParam(value = "file", required = true) MultipartFile file) {
 
-		// has to change later if we want to do authorization
-		User user = userDao.getUser(1);
 		try {
 			
-
-			 File newFile = fileDao.uploadFile(file, user);
+			 File newFile = fileDao.uploadFile(file, sub);
 			 Map<String, String> jsonFile = new HashMap<>();
 			 jsonFile.put("url", newFile.getUrl());
 			
 			 return jsonFile;
 
 		} catch (Exception e) {
-			System.out.println("hereerr");
+			System.out.println("uploading error");
 			throw new AddingQuestionError(e.getLocalizedMessage());
 		}
 	}
 	
 	@DeleteMapping("/{file_id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void removeFile(@PathVariable Long file_id) {
-		fileDao.deleteFile(file_id, userDao.getUser(1));
+	public void removeFile(@ModelAttribute("sub") String sub, @PathVariable Long file_id) {
+
+		File file = fileDao.getFile(file_id);
+		
+		if (!file.getOwnerId().equals(sub))
+			throw new AccessDeniedException("403 returned");
+		
+		fileDao.deleteFile(file_id);
 	}
 }

@@ -7,8 +7,10 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +27,8 @@ import survey.model.response.dao.SurveyResponseDao;
 import survey.model.statistic.ResponseGroup;
 import survey.model.statistic.ResponseGroupType;
 import survey.model.statistic.dao.ResponseGroupDao;
+import survey.model.survey.Survey;
+import survey.model.survey.dao.SurveyDao;
 import survey.util.Views;
 
 @RestController
@@ -37,6 +41,8 @@ public class ResponseGroupController2 {
 	@Autowired
 	private SurveyResponseDao surveyResponseDao;
 
+	@Autowired
+	private SurveyDao surveyDao;
 
 	@GetMapping("/{resGroupId}")
 	@JsonView(Views.Public.class)
@@ -49,7 +55,7 @@ public class ResponseGroupController2 {
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	@JsonView(Views.Public.class)
-	public Long addResponseGroup(@RequestBody Map<String, Object> resGroupInfo) {
+	public Long addResponseGroup(@ModelAttribute("sub") String sub, @RequestBody Map<String, Object> resGroupInfo) {
 
 		String groupBy = (String) resGroupInfo.get("groupBy");
 		String groupedValue = (String) resGroupInfo.get("groupedValue");
@@ -75,16 +81,21 @@ public class ResponseGroupController2 {
 		} ;
 
 		if (resGroup != null) {
+			if (!resGroup.getOwnerId().equals(sub)) {
+				throw new AccessDeniedException("403 returned");
+			}
+			
 			resGroup.getResponses().clear();
 		} else {
 			resGroup =
 					new ResponseGroup(name, ResponseGroupType.valueOf(groupType), groupBy, groupedValue);
+			resGroup.setOwnerId(sub);
 		}
 
 
 		List<String> givenResponses = (List<String>) resGroupInfo.get("responses");;
 
-		
+
 		if (givenResponses == null) {
 			givenResponses = new ArrayList<>();
 		}
@@ -100,7 +111,13 @@ public class ResponseGroupController2 {
 	@GetMapping("/surveys/{surveyId}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	@JsonView(Views.Public.class)
-	public List<ResponseGroup> getResponsesBySurvey(@PathVariable Long surveyId) {
+	public List<ResponseGroup> getResponseGroupsBySurvey(@ModelAttribute("sub") String sub,
+			@PathVariable Long surveyId) {
+
+		Survey survey = surveyDao.getSurvey(surveyId);
+
+		if (!survey.getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
 
 		List<ResponseGroup> resGroups = new ArrayList<>();
 
@@ -135,7 +152,7 @@ public class ResponseGroupController2 {
 	@PostMapping("/survey/{surveyId}/years")
 	@ResponseStatus(HttpStatus.CREATED)
 	@JsonView(Views.Public.class)
-	public List<Integer> addResponseGroupByYearsOfSurvey(@PathVariable Long surveyId,
+	public List<Integer> addResponseGroupByYearsOfSurvey(@ModelAttribute("sub") String sub, @PathVariable Long surveyId,
 			@RequestBody Map<String, Object> resGroupInfo) {
 
 		List<Integer> years = surveyResponseDao.getResponseYears(surveyId);
@@ -154,14 +171,18 @@ public class ResponseGroupController2 {
 
 			try {
 				resGroup = responseGroupDao.getResponseGroup(groupedBy, groupedValue);
-
 			} catch (Exception e) {
 			} ;
 
 			if (resGroup != null) {
+				if (!resGroup.getOwnerId().equals(sub)) {
+					throw new AccessDeniedException("403 returned");
+				}
+				
 				resGroup.getResponses().clear();
 			} else {
 				resGroup = new ResponseGroup(name, groupType, groupedBy, groupedValue);
+				resGroup.setOwnerId(sub);
 			}
 
 			resGroup.setResponses(surveyResponseDao.getSurveyResponsesByYear(surveyId, year));

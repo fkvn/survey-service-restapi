@@ -9,7 +9,7 @@ public interface SurveyDao {
 
 	public List<Survey> getOpenSurveys();
 
-	public List<Survey> getSurveys(User user);
+	public List<Survey> getSurveys(String authorId);
 
 	public List<Survey> getClosedSurveys();
 

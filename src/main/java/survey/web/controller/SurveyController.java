@@ -10,14 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.commons.codec.binary.Base64;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 // import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -60,7 +56,6 @@ import survey.model.statistic.RankingQRS;
 import survey.model.statistic.RatingQRS;
 import survey.model.statistic.TextQRS;
 import survey.model.statistic.dao.QuestionResultSummaryDao;
-import survey.model.statistic.dao.ResponseGroupDao;
 import survey.model.survey.MultipleChoiceQuestion;
 import survey.model.survey.Question;
 import survey.model.survey.QuestionSection;
@@ -78,9 +73,6 @@ public class SurveyController {
 
 	@Autowired
 	private SurveyDao surveyDao;
-
-	@Autowired
-	private UserDao userDao;
 
 	@Autowired
 	private FileDao fileDao;
@@ -103,57 +95,13 @@ public class SurveyController {
 	@Autowired
 	private QuestionResultSummaryDao qResultSummaryDao;
 
-	@Autowired
-	private ResponseGroupDao resGroupDao;
-
-
-	// get sub from access_token
-	private String getSub(HttpServletRequest request) throws ParseException {
-
-		if (request.getHeader("Authorization") == null
-				|| request.getHeader("Authorization").length() == 0)
-			return "";
-		String token = request.getHeader("Authorization").split(" ")[1]; // get jwt from header
-		String encodedPayload = token.split("\\.")[1]; // get second encoded part in jwt
-		Base64 base64Url = new Base64(true);
-		String payload = new String(base64Url.decode(encodedPayload));
-
-		JSONParser parser = new JSONParser();
-		JSONObject claimsObj = null;
-		try {
-			claimsObj = (JSONObject) parser.parse(payload);
-		} catch (org.json.simple.parser.ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return claimsObj.get("sub").toString();
-	}
-
 	// Survey
 
 	// no need authorization
 	@GetMapping("/open")
 	@JsonView(Views.Public.class)
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	// public List<Survey> getOpenSurvey(HttpServletRequest request) throws ParseException {
-	// System.out.println("open");
-	//
-	// String sub = getSub(request);
-	// if (sub == null || sub.length() == 0)
-	// throw new AccessDeniedException("403 returned");
-	//
-	// System.out.println(sub);
-	//
-	// return surveyDao.getOpenSurveys();
-	// }
-	public List<Survey> getOpenSurvey(@ModelAttribute("sub") String sub) throws ParseException {
-
-		System.out.println("open with sub from controller Advice");
-
-//		if (sub == null || sub.length() == 0)
-//			throw new AccessDeniedException("403 returned");
-
-		System.out.println(sub);
+	public List<Survey> getOpenSurvey() {
 
 		return surveyDao.getOpenSurveys();
 	}
@@ -161,40 +109,21 @@ public class SurveyController {
 	@JsonView(Views.Public.class)
 	@GetMapping
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public List<Survey> getSurveys() {
+	public List<Survey> getSurveys(@ModelAttribute("sub") String sub) {
 
-		// has to change later if we want to do authorization
-		User user = userDao.getUser(1);
-
-		return surveyDao.getSurveys(user);
+		return surveyDao.getSurveys(sub);
 	}
-
-	// @GetMapping("/closed")
-	// @JsonView(Views.Public.class)
-	// @ResponseStatus(HttpStatus.ACCEPTED)
-	// public List<Survey> getClosedSurvey() {
-	//
-	// return surveyDao.getClosedSurveys();
-	// }
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public Long addSurvey(@RequestBody Survey survey) {
+	public Long addSurvey(@ModelAttribute("sub") String sub, @RequestBody Survey survey) {
 
-		//
-		System.out.println("here");
-		// // has to change later if we want to do authorization
-		User user = userDao.getUser(1);
-
-		survey.setAuthor(user);
+		survey.setAuthorId(sub);
 		survey.setCreatedDate(new Date());
-
-		System.out.println(survey.getName());
 
 		if (survey.getType() == null) {
 			survey.setType(SurveyType.ANONYMOUS);
 		}
-
 
 		survey.setQuestionSections(new ArrayList<>());
 
@@ -206,22 +135,36 @@ public class SurveyController {
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	@JsonView(Views.Internal.class)
-	public Survey getSurvey(@PathVariable Long id) {
+	public Survey getSurvey(@ModelAttribute("sub") String sub, @PathVariable Long id) {
 
 		Survey survey = surveyDao.getSurvey(id);
-		System.out.println(survey == null);
 
 		if (survey == null)
 			throw new SurveyNotFoundException();
 
-		return surveyDao.getSurvey(id);
+		if (survey.isClosed()) {
+			// authorize user
+			if (sub == null || sub.length() == 0)
+				throw new AccessDeniedException("401 returned");
+
+			// validate user
+			if (!survey.getAuthorId().equals(sub))
+				throw new AccessDeniedException("403 returned");
+		}
+
+		return survey;
 	}
 
 	@PatchMapping("/{id}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public Long editSurvey(@PathVariable Long id, @RequestBody Map<String, Object> surveyInfo) {
+	public Long editSurvey(@ModelAttribute("sub") String sub, @PathVariable Long id,
+			@RequestBody Map<String, Object> surveyInfo) {
 
 		Survey survey = surveyDao.getSurvey(id);
+
+		if (!survey.getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
+
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 		for (String key : surveyInfo.keySet()) {
@@ -264,9 +207,12 @@ public class SurveyController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void deleteSurvey(@PathVariable Long id) {
+	public void deleteSurvey(@ModelAttribute("sub") String sub, @PathVariable Long id) {
 
 		Survey survey = surveyDao.getSurvey(id);
+
+		if (!survey.getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
 
 		survey.getResponses().forEach(res -> {
 			res.getAnswerSections().forEach(ansSection -> {
@@ -281,7 +227,7 @@ public class SurveyController {
 		survey.getQuestionSections().forEach(qSection -> {
 			qSection.getQuestions().forEach(question -> {
 				question.getAttachments().forEach(file -> {
-					fileDao.deleteFile(((File) file).getId(), userDao.getUser(1));
+					fileDao.deleteFile(((File) file).getId());
 				});
 				questionDao.removeQuestion(question.getId());
 			});
@@ -294,109 +240,122 @@ public class SurveyController {
 
 	// Survey > Section
 
-	@GetMapping("/{surveyId}/questionResultSummaries")
-	@ResponseStatus(HttpStatus.ACCEPTED)
-	@JsonView(Views.Public.class)
-	public Map<Long, Object> getSurveyQRS(@PathVariable Long surveyId) {
-
-		Survey survey = surveyDao.getSurvey(surveyId);
-		Map<Long, Object> surveyQRS = new HashMap<>();
-
-		survey.getQuestionSections().forEach(sec -> {
-
-			surveyQRS.put(sec.getId(), getAllQRSFromSection(sec));
-
-		});
-
-
-		return surveyQRS;
-	}
-
-	// Survey > Section
 
 	@JsonView(Views.Public.class)
 	@GetMapping("/{surveyId}/sections")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public List<QuestionSection> getSections(@PathVariable Long surveyId) {
+	public List<QuestionSection> getSections(@ModelAttribute("sub") String sub,
+			@PathVariable Long surveyId) {
+
+		Survey survey = surveyDao.getSurvey(surveyId);
+		if (!survey.getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
 
 		return questionSectionDao.getQuestionSections(surveyId);
 	}
 
-	@PostMapping("/{surveyId}/sections")
-	@ResponseStatus(HttpStatus.CREATED)
-	public Long addSection(@PathVariable Long surveyId,
-			@RequestBody QuestionSection questionSection) {
-
-		Survey survey = surveyDao.getSurvey(surveyId);
-
-		questionSection.setQuestions(new ArrayList<>());
-		questionSection = questionSectionDao.saveQuestionSection(questionSection);
-
-		survey.getQuestionSections().add(questionSection);
-		survey = surveyDao.saveSurvey(survey);
-
-		return survey.getQuestionSections().get(survey.getNumOfSections() - 1).getId();
-	}
 
 	@GetMapping("/{surveyId}/sections/{sectionId}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	@JsonView(Views.Internal.class)
-	public QuestionSection getSection(@PathVariable Long sectionId) {
+	public QuestionSection getSection(@ModelAttribute("sub") String sub,
+			@PathVariable Long sectionId) {
 
-		return questionSectionDao.getQuestionSection(sectionId);
+		QuestionSection section = questionSectionDao.getQuestionSection(sectionId);
+
+		if (!section.getSurvey().getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
+
+		return section;
+	}
+
+
+	@PostMapping("/{surveyId}/sections")
+	@ResponseStatus(HttpStatus.CREATED)
+	public Long addSection(@ModelAttribute("sub") String sub, @PathVariable Long surveyId,
+			@RequestBody QuestionSection questionSection) {
+
+		Survey survey = surveyDao.getSurvey(surveyId);
+
+		if (!survey.getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
+
+		// add section
+		questionSection.setQuestions(new ArrayList<>());
+		questionSection = questionSectionDao.saveQuestionSection(questionSection);
+
+		// update survey
+		survey.getQuestionSections().add(questionSection);
+		survey = surveyDao.saveSurvey(survey);
+
+		return questionSection.getId();
 	}
 
 	@PatchMapping("/{surveyId}/sections/{sectionId}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public Long editSection(@PathVariable Long sectionId,
+
+	public Long editSection(@ModelAttribute("sub") String sub, @PathVariable Long sectionId,
 			@RequestBody Map<String, Object> questionSectionInfo) {
 
-		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
+		QuestionSection section = questionSectionDao.getQuestionSection(sectionId);
+
+		if (!section.getSurvey().getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
 
 		for (String key : questionSectionInfo.keySet()) {
 			switch (key) {
 
 				case "description":
-					questionSection.setDescription((String) questionSectionInfo.get(key));
+					section.setDescription((String) questionSectionInfo.get(key));
 					break;
 				default:
 			}
 		}
-		questionSection = questionSectionDao.saveQuestionSection(questionSection);
-		return questionSection.getId();
+
+		// update section
+		section = questionSectionDao.saveQuestionSection(section);
+
+		return section.getId();
 	}
+
 
 	@PutMapping("/{surveyId}/sections/{sectionId}/index")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public void updateSectionIndex(@PathVariable Long surveyId, @PathVariable Long sectionId,
-			@RequestBody Map<String, Object> requestInfo) {
+	public void updateSectionIndex(@ModelAttribute("sub") String sub, @PathVariable Long surveyId,
+			@PathVariable Long sectionId, @RequestBody Map<String, Object> requestInfo) {
 
 		QuestionSection section = questionSectionDao.getQuestionSection(sectionId);
+
+		if (!section.getSurvey().getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
+
 		int oldIndex = section.getSectionIndex();
 		int newIndex = (int) requestInfo.get("index");
-
-		// System.out.println(surveyId);
-		// System.out.println(sectionId);
-		// System.out.println(oldIndex);
-		// System.out.println(newIndex);
 
 		surveyDao.moveSectionInSurvey(surveyId, oldIndex, newIndex);
 
 	}
 
-
 	@DeleteMapping("/{surveyId}/sections/{sectionId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void deleteSection(@PathVariable Long surveyId, @PathVariable Long sectionId) {
+	public void deleteSection(@ModelAttribute("sub") String sub, @PathVariable Long surveyId,
+			@PathVariable Long sectionId) {
 
-		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
+		QuestionSection section = questionSectionDao.getQuestionSection(sectionId);
 
-		if (questionSection.getQuestions().size() > 0) {
+		if (!section.getSurvey().getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
 
-			questionSection.getQuestions().forEach(question -> {
+		if (section.getQuestions().size() > 0) {
+
+			section.getQuestions().forEach(question -> {
 				if (question != null) {
 					question.getAttachments().forEach(file -> {
-						fileDao.deleteFile(file.getId(), userDao.getUser(1));
+						if (!file.getOwnerId().equals(sub)) {
+							throw new AccessDeniedException("403 returned");
+						}
+
+						fileDao.deleteFile(file.getId());
 					});
 					questionDao.removeQuestion(question.getId());
 				}
@@ -411,9 +370,13 @@ public class SurveyController {
 	@GetMapping("/{surveyId}/sections/{sectionId}/questions")
 	@JsonView(Views.Public.class)
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public List<Question> getSectionQuestions(@PathVariable Long sectionId) {
+	public List<Question> getSectionQuestions(@ModelAttribute("sub") String sub,
+			@PathVariable Long sectionId) {
 
-		// QuestionSection qSection = ques
+		QuestionSection section = questionSectionDao.getQuestionSection(sectionId);
+
+		if (!section.getSurvey().getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
 
 		return questionDao.getSectionQuestions(sectionId);
 	}
@@ -421,40 +384,43 @@ public class SurveyController {
 	@GetMapping("/{surveyId}/sections/{sectionId}/questions/{questionId}")
 	@JsonView(Views.Internal.class)
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public Question getSectionQuestion(@PathVariable Long surveyId, @PathVariable Long sectionId,
-			@PathVariable Long questionId) {
+	public Question getSectionQuestion(@ModelAttribute("sub") String sub, @PathVariable Long surveyId,
+			@PathVariable Long sectionId, @PathVariable Long questionId) {
+
+		QuestionSection section = questionSectionDao.getQuestionSection(sectionId);
+
+		if (!section.getSurvey().getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
 
 		return questionDao.getSectionQuestion(surveyId, sectionId, questionId);
 	}
 
 	@PostMapping("/{surveyId}/sections/{sectionId}/questions")
 	@ResponseStatus(HttpStatus.CREATED)
-	public Long addQuestion(@PathVariable Long surveyId, @PathVariable Long sectionId,
-			@RequestPart("question") String strQuestion,
+	public Long addQuestion(@ModelAttribute("sub") String sub, @PathVariable Long surveyId,
+			@PathVariable Long sectionId, @RequestPart("question") String strQuestion,
 			@RequestPart(value = "files", required = false) MultipartFile[] files) {
 
 		ObjectMapper mapper = new ObjectMapper();
-		// System.out.println("before convert");
-		// System.out.println(strQuestion.isEmpty());
+
+		// validate user
+		Survey survey = surveyDao.getSurvey(surveyId);
+		if (!survey.getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
 
 		try {
-			// System.out.println("trying convert");
+
 			Question question = mapper.readValue(strQuestion, Question.class);
-			// System.out.println(question.getDecriminatorValue());
-			// System.out.println("after convert");
 			QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
 
-			// has to change later if we want to do authorization
-			User user = userDao.getUser(1);
+			// validate user
+			if (!questionSection.getSurvey().getAuthorId().equals(sub))
+				throw new AccessDeniedException("403 returned");
 
 			// uploading file process
 			if (files != null && files.length > 0) {
 				try {
 					// file validation
-
-					// System.out.println(files.length);
-					// System.out.println(files[0].isEmpty());
-					// System.out.println(files[1].isEmpty());
 					for (int i = 0; i < files.length; i++) {
 						if (!files[i].isEmpty()
 								&& !files[i].getContentType().split("/")[0].trim().equals("image")) {
@@ -471,9 +437,7 @@ public class SurveyController {
 					// uploading files and add to the question attachment lists
 					for (int i = 0; i < files.length; i++) {
 						if (!files[i].isEmpty()) {
-							File newFile = fileDao.uploadFile(files[i], user);
-							// System.out.println(newFile);
-							// System.out.println(newFile.getName());
+							File newFile = fileDao.uploadFile(files[i], sub);
 
 							question.getAttachments().add(newFile);
 						}
@@ -484,12 +448,10 @@ public class SurveyController {
 				}
 			}
 
-			// System.out.println("here");
-
 			// adding question to database
 			question = questionDao.saveQuestion(question);
-			// System.out.println(question.getId());
 
+			// update section
 			questionSection.getQuestions().add(question);
 			questionSectionDao.saveQuestionSection(questionSection);
 
@@ -503,20 +465,26 @@ public class SurveyController {
 
 	@PutMapping("/{surveyId}/sections/{sectionId}/questions/{questionId}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public Long editQuestion(@PathVariable Long sectionId, @PathVariable Long questionId,
-			@RequestPart("question") String strQuestion,
+	public Long editQuestion(@ModelAttribute("sub") String sub, @PathVariable Long sectionId,
+			@PathVariable Long questionId, @RequestPart("question") String strQuestion,
 			@RequestPart(value = "files", required = false) MultipartFile[] files) {
 
 		ObjectMapper mapper = new ObjectMapper();
+
+		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
+
+		// validate user
+		if (!questionSection.getSurvey().getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
+
 		try {
 
 			Question question = mapper.readValue(strQuestion, Question.class);
 
-			// has to change later if we want to do authorization
-			User user = userDao.getUser(1);
-
-			// genrating files
+			// generating file list
 			List<File> newFiles = new ArrayList<File>();
+
+			// updating list
 			if (files != null && files.length > 0) {
 				try {
 					for (int i = 0; i < files.length; i++) {
@@ -527,10 +495,10 @@ public class SurveyController {
 						}
 					}
 
-					// uploading files and add to the question attachment lists
+					// uploading and adding files into newFiles list
 					for (int i = 0; i < files.length; i++) {
 						if (!files[i].isEmpty()) {
-							File newFile = fileDao.uploadFile(files[i], user);
+							File newFile = fileDao.uploadFile(files[i], sub);
 							newFiles.add(newFile);
 						}
 					}
@@ -540,13 +508,17 @@ public class SurveyController {
 				}
 			}
 
-
+			// get exist question in database
 			Question existedQuestion = questionDao.getQuestion(questionId);
-			QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
 
+			// get question index
 			Long questionIndex = (long) questionSection.getQuestions().indexOf(existedQuestion);
+
+			// update existed question with new question info and files
 			existedQuestion =
 					questionDao.updateQuestion(sectionId, questionIndex, questionId, question, newFiles);
+
+
 			return existedQuestion.getId();
 
 		} catch (JsonProcessingException e) {
@@ -556,49 +528,85 @@ public class SurveyController {
 
 	@PutMapping("/{surveyId}/sections/{sectionId}/questions/{questionId}/index")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public void updateQuestionIndex(@PathVariable Long surveyId, @PathVariable Long sectionId,
-			@PathVariable Long questionId, @RequestBody Map<String, Object> requestInfo) {
+	public void updateQuestionIndex(@ModelAttribute("sub") String sub, @PathVariable Long surveyId,
+			@PathVariable Long sectionId, @PathVariable Long questionId,
+			@RequestBody Map<String, Object> requestInfo) {
 
 		Question question = questionDao.getQuestion(questionId);
+
+		// validate user
+		if (!question.getQuestionSection().getSurvey().getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
+
 		int oldIndex = question.getQuestionIndex();
 		int newIndex = (int) requestInfo.get("index");
-
-		System.out.println(surveyId);
-		System.out.println(sectionId);
-		System.out.println(oldIndex);
-		System.out.println(newIndex);
+		//
+		// System.out.println(surveyId);
+		// System.out.println(sectionId);
+		// System.out.println(oldIndex);
+		// System.out.println(newIndex);
 
 		questionSectionDao.moveQuestionInSections(surveyId, sectionId, oldIndex, newIndex);
 
 	}
 
-
 	@DeleteMapping("/{surveyId}/sections/{sectionId}/questions/{questionId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void deleteQuestion(@PathVariable Long surveyId, @PathVariable Long sectionId,
-			@PathVariable Long questionId) throws Exception {
+	public void deleteQuestion(@ModelAttribute("sub") String sub, @PathVariable Long surveyId,
+			@PathVariable Long sectionId, @PathVariable Long questionId) throws Exception {
 
 		Question question = questionDao.getQuestion(questionId);
 		QuestionSection questionSection = questionSectionDao.getQuestionSection(sectionId);
 
+		// bad request
 		if (question == null || !questionSection.getSurvey().getId().equals(surveyId)) {
 			throw new Exception("Unsuccessful delete question!");
 		}
 
+		// validate user
+		if (!questionSection.getSurvey().getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
 
+		// remove question from section
 		questionSection.getQuestions().remove(question);
+
+		// update section
 		questionSectionDao.saveQuestionSection(questionSection);
 
+		// remove question's files
 		question.getAttachments().forEach(file -> {
-			fileDao.deleteFile(((File) file).getId(), userDao.getUser(1));
+			fileDao.deleteFile(((File) file).getId());
 		});
 
+		// remove question from database
 		questionDao.removeQuestion(questionId);
 
 	}
 
-
+	// =================================================================
 	// Survey > Section > questionResultSummary
+
+	@GetMapping("/{surveyId}/questionResultSummaries")
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	@JsonView(Views.Public.class)
+	public Map<Long, Object> getSurveyQRS(@ModelAttribute("sub") String sub, @PathVariable Long surveyId) {
+
+		Survey survey = surveyDao.getSurvey(surveyId);
+		// validate user
+		if (!survey.getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
+		
+		Map<Long, Object> surveyQRS = new HashMap<>();
+
+		survey.getQuestionSections().forEach(sec -> {
+
+			surveyQRS.put(sec.getId(), getAllQRSFromSection(sec));
+
+		});
+
+
+		return surveyQRS;
+	}
 
 	@GetMapping("/{surveyId}/sections/{sectionId}/questionResultSummaries")
 	@ResponseStatus(HttpStatus.ACCEPTED)
@@ -611,7 +619,7 @@ public class SurveyController {
 		return getAllQRSFromSection(section);
 	}
 
-
+	// helper function
 	public Map<Long, QuestionResultSummary> getAllQRSFromSection(QuestionSection section) {
 
 		Map<Long, QuestionResultSummary> qResultSummaries = new HashMap<>();
@@ -682,25 +690,35 @@ public class SurveyController {
 	@GetMapping("/{surveyId}/responses")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	@JsonView(Views.Public.class)
-	public List<SurveyResponse> getSurveyResponses(@PathVariable Long surveyId) {
-
+	public List<SurveyResponse> getSurveyResponses(@ModelAttribute("sub") String sub, @PathVariable Long surveyId) {
+		
+		Survey survey = surveyDao.getSurvey(surveyId);
+		
+		if (!survey.getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
+		
 		return surveyResponseDao.getSurveyResponses(surveyId);
 	}
 
 	@GetMapping("/{surveyId}/allresponses")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	@JsonView(Views.Public.class)
-	public List<SurveyResponse> getSurveyResponsesAll(@PathVariable Long surveyId) {
-
+	public List<SurveyResponse> getSurveyResponsesAll(@ModelAttribute("sub") String sub, @PathVariable Long surveyId) {
+		Survey survey = surveyDao.getSurvey(surveyId);
+		
+		if (!survey.getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
+		
 		return surveyResponseDao.getSurveyResponsesAll(surveyId);
 	}
+	
 
 	@PostMapping("/{surveyId}/responses")
 	@ResponseStatus(HttpStatus.CREATED)
 	public Long addSurveyResponse(@PathVariable Long surveyId, @RequestBody SurveyResponse response) {
-
+		
 		Survey survey = surveyDao.getSurvey(surveyId);
-
+		
 		response.setSurvey(survey);
 		response.setDate(new Date());
 
@@ -786,12 +804,18 @@ public class SurveyController {
 		return surveyResponseDao.saveResponse(response).getId();
 
 	}
+	
 
 	@GetMapping("/{surveyId}/responses/{responseId}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	@JsonView(Views.Internal.class)
-	public SurveyResponse getSurveyResponse(@PathVariable Long responseId) {
+	public SurveyResponse getSurveyResponse(@ModelAttribute("sub") String sub, @PathVariable Long responseId) {
 
+		SurveyResponse response = surveyResponseDao.getResponse(responseId);
+		
+		if (!response.getSurvey().getAuthorId().equals(sub))
+			throw new AccessDeniedException("403 returned");
+		
 		return surveyResponseDao.getResponse(responseId);
 	}
 
@@ -808,6 +832,7 @@ public class SurveyController {
 
 		surveyResponseDao.saveResponse(response);
 	}
+	
 
 	// =================================================================
 

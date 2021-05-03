@@ -1,21 +1,22 @@
 package survey.model.surveychart;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
-import javax.persistence.CollectionTable;
+
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
-import javax.persistence.OrderColumn;
 import javax.persistence.Table;
-import survey.model.core.User;
+
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
+import survey.model.statistic.ResponseGroup;
+import survey.model.survey.Question;
 
 /**
  * Class description.
@@ -38,125 +39,101 @@ public class SurveyChart implements Serializable {
   private Long id;
 
   @Column(nullable = false)
-  private String name;
+  private String name = "Custom Chart";
+  
+  // This needs to be updated later for general chart
+  // At the moment, we create fixed type of chart
+  @Column(nullable = false)
+  private String type = "qAdvChart";
 
-  @Column(name = "x_label")
-  private String xLabel;
-
-  @ElementCollection
-  @CollectionTable(name = "survey_chart_xcoordinate", joinColumns = @JoinColumn(name = "chart_id"))
-  @Column(name = "coordinate")
-  @OrderColumn(name = "coordinate_order")
-  private List<String> xCoordinates;
-
-  @Column(name = "y_label")
-  private String yLabel;
-
-  @Column(name = "y_min")
-  private Integer yMin;
-
-  @Column(name = "y_max")
-  private Integer yMax;
-
-  @OneToMany(mappedBy = "chart")
-  @OrderBy("name asc")
-  private List<SurveyChartSeries> series;
-
+  
+  @ManyToMany
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+  @JsonIdentityReference(alwaysAsId = true)
+  private List<ResponseGroup> resGroups;
+  
   @ManyToOne
-  @JoinColumn(name = "creator_id")
-  private User creator;
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+  @JsonIdentityReference(alwaysAsId = true)
+  private Question question;
+
+	public List<ResponseGroup> getResGroups() {
+
+		return resGroups;
+	}
 
 
-  private Date date;
+	public void setResGroups(List<ResponseGroup> resGroups) {
 
-  private boolean deleted;
+		this.resGroups = resGroups;
+	}
 
-  public Long getId() {
-    return id;
-  }
 
-  public void setId(Long id) {
-    this.id = id;
-  }
+	public String getName() {
 
-  public String getName() {
-    return name;
-  }
+		return name;
+	}
 
-  public void setName(String name) {
-    this.name = name;
-  }
 
-  public String getxLabel() {
-    return xLabel;
-  }
+	public void setName(String name) {
 
-  public void setxLabel(String xLabel) {
-    this.xLabel = xLabel;
-  }
+		this.name = name;
+	}
 
-  public List<String> getxCoordinates() {
-    return xCoordinates;
-  }
 
-  public void setxCoordinates(List<String> xCoordinates) {
-    this.xCoordinates = xCoordinates;
-  }
+	public Question getQuestion() {
 
-  public String getyLabel() {
-    return yLabel;
-  }
+		return question;
+	}
 
-  public void setyLabel(String yLabel) {
-    this.yLabel = yLabel;
-  }
 
-  public Integer getyMin() {
-    return yMin;
-  }
+	public void setQuestion(Question question) {
 
-  public void setyMin(Integer yMin) {
-    this.yMin = yMin;
-  }
+		this.question = question;
+	}
 
-  public Integer getyMax() {
-    return yMax;
-  }
 
-  public void setyMax(Integer yMax) {
-    this.yMax = yMax;
-  }
+	public Long getId() {
 
-  public List<SurveyChartSeries> getSeries() {
-    return series;
-  }
+		return id;
+	}
 
-  public void setSeries(List<SurveyChartSeries> series) {
-    this.series = series;
-  }
 
-  public User getCreator() {
-    return creator;
-  }
+	public void setId(Long id) {
 
-  public void setCreator(User creator) {
-    this.creator = creator;
-  }
+		this.id = id;
+	}
 
-  public Date getDate() {
-    return date;
-  }
+//  @ManyToOne
+//  private String ownerId;
+	
+//@Column(name = "x_label")
+//private String xLabel;
+//
+//@ElementCollection
+//@CollectionTable(name = "survey_chart_xcoordinate", joinColumns = @JoinColumn(name = "chart_id"))
+//@Column(name = "coordinate")
+//@OrderColumn(name = "coordinate_order")
+//private List<String> xCoordinates;
+//
+//@Column(name = "y_label")
+//private String yLabel;
+//
+//@Column(name = "y_min")
+//private Integer yMin;
+//
+//@Column(name = "y_max")
+//private Integer yMax;
 
-  public void setDate(Date date) {
-    this.date = date;
-  }
-
-  public boolean isDeleted() {
-    return deleted;
-  }
-
-  public void setDeleted(boolean deleted) {
-    this.deleted = deleted;
-  }
+//
+//	public String getOwnerId() {
+//
+//		return ownerId;
+//	}
+//
+//	public void setOwnerId(String ownerId) {
+//
+//		this.ownerId = ownerId;
+//	}
 
 }

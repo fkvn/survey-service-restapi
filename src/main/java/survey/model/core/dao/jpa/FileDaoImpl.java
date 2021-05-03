@@ -24,7 +24,7 @@ public class FileDaoImpl implements FileDao {
 
 	@Override
 	@Transactional
-	public File uploadFile(MultipartFile file, User user) {
+	public File uploadFile(MultipartFile file, String ownerId) {
 		System.out.println("uploading files");
 		String fileName = StringUtils.cleanPath(file.getOriginalFilename());
 
@@ -32,7 +32,7 @@ public class FileDaoImpl implements FileDao {
 			if (!fileName.equals("") && !fileName.equals("..")) {
 				File newFile = new File();
 				
-				newFile.setOwner(user);
+				newFile.setOwnerId(ownerId);
 				newFile.setName(fileName);
 				newFile.setDate(new Date());
 				newFile.setType(file.getContentType());
@@ -65,7 +65,7 @@ public class FileDaoImpl implements FileDao {
 
 	@Override
 	@Transactional
-	public void deleteFile(Long fileId, User user) {
+	public void deleteFile(Long fileId) {
 		entityManager.remove(entityManager.find(File.class, fileId));
 	}
 

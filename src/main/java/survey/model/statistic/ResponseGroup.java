@@ -69,11 +69,11 @@ public class ResponseGroup implements Serializable {
 	private ResponseGroupType groupType;
 
 	private String groupBy = "";
-	
-	// groupBy="question"
 
 	// groupedValue = "question_id: {id}"
 	private String groupedValue = "";
+	
+	private String ownerId;
 
 	@ManyToMany
 //	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
@@ -139,5 +139,15 @@ public class ResponseGroup implements Serializable {
 	public void setGroupType(ResponseGroupType groupType) {
 
 		this.groupType = groupType;
+	}
+
+	public String getOwnerId() {
+
+		return ownerId;
+	}
+
+	public void setOwnerId(String ownerId) {
+
+		this.ownerId = ownerId;
 	}
 }

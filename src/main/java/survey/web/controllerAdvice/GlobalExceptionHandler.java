@@ -17,6 +17,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -35,29 +36,44 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	@ModelAttribute("sub")
 	protected String extractUserFromJWT(HttpServletRequest request) throws ParseException {
 
+//		System.out.println("checking");
+		String sub = "";
+
 		if (request.getHeader("Authorization") == null
-				|| request.getHeader("Authorization").length() == 0)
+				|| request.getHeader("Authorization").length() == 0
+				|| request.getHeader("Authorization").equals("null")) {
 			return "";
-		String token = request.getHeader("Authorization").split(" ")[1]; // get jwt from header
-		String encodedPayload = token.split("\\.")[1]; // get second encoded part in jwt
-		Base64 base64Url = new Base64(true);
-		String payload = new String(base64Url.decode(encodedPayload));
- 
-		System.out.println("Controller Advice");
-		System.out.println(payload);
-		
-		JSONParser parser = new JSONParser();
-		JSONObject claimsObj = null;
-		try {
-			claimsObj = (JSONObject) parser.parse(payload);
-		} catch (org.json.simple.parser.ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 		
-		System.out.println(claimsObj.toJSONString());
+		else {
+//			System.out.println("authorization");
+//			System.out.println(request.getHeader("Authorization"));
+			
+			String token = request.getHeader("Authorization").split(" ")[1]; // get jwt from header
+			String encodedPayload = token.split("\\.")[1]; // get second encoded part in jwt
+			Base64 base64Url = new Base64(true);
+			String payload = new String(base64Url.decode(encodedPayload));
+
+			JSONParser parser = new JSONParser();
+			JSONObject claimsObj = null;
+			
+			
+			try {
+				claimsObj = (JSONObject) parser.parse(payload);
+			} catch (org.json.simple.parser.ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			sub = claimsObj.get("sub").toString();
+
+			if (sub == null || sub.length() == 0)
+				throw new AccessDeniedException("405 returned");
+		}
+
+		return sub;
 		
-		return claimsObj.get("sub").toString();
+//		return "";
 	}
 
 	@ExceptionHandler({ TransactionSystemException.class, DataIntegrityViolationException.class })

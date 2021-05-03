@@ -57,10 +57,9 @@ public class File implements Serializable {
 	@JsonIgnore
 	private Date date;
 
-	@ManyToOne(fetch = FetchType.LAZY)
 	@JsonIgnore
 	@JoinColumn(nullable = false, name = "owner_id")
-	private User owner;
+	private String ownerId;
 
 	@Lob
 	@JsonIgnore
@@ -117,16 +116,6 @@ public class File implements Serializable {
 		this.date = date;
 	}
 
-	public User getOwner() {
-
-		return owner;
-	}
-
-	public void setOwner(User owner) {
-
-		this.owner = owner;
-	}
-
 	public byte[] getFileData() {
 
 		return fileData;
@@ -152,6 +141,16 @@ public class File implements Serializable {
 		return Comparator.comparing(File::getName).thenComparing(File::getType)
 				.thenComparing(File::getSize).compare(this, file) == 0
 				&& Arrays.equals(this.getFileData(), file.getFileData());
+	}
+
+	public String getOwnerId() {
+
+		return ownerId;
+	}
+
+	public void setOwnerId(String ownerId) {
+
+		this.ownerId = ownerId;
 	}
 
 }

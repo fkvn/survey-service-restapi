@@ -22,10 +22,10 @@ public class SurveyDaoImpl implements SurveyDao {
 	private EntityManager entityManager;
 
 	@Override
-	public List<Survey> getSurveys(User user) {
+	public List<Survey> getSurveys(String authorId) {
 
-		return entityManager.createQuery("from Survey where author.id =: userId", Survey.class)
-				.setParameter("userId", user.getId()).getResultList();
+		return entityManager.createQuery("from Survey where authorId =: authorId", Survey.class)
+				.setParameter("authorId", authorId).getResultList();
 	}
 
 	@Override
@@ -35,6 +35,12 @@ public class SurveyDaoImpl implements SurveyDao {
 				.createQuery("from Survey where closed = :closed and publishDate != null", Survey.class)
 				.setParameter("closed", false).getResultList();
 	}
+	
+	@Override
+	public Survey getSurvey(long id) {
+
+		return entityManager.find(Survey.class, id);
+	}
 
 	@Override
 	public List<Survey> getClosedSurveys() {
@@ -43,11 +49,7 @@ public class SurveyDaoImpl implements SurveyDao {
 				.setParameter("closed", true).getResultList();
 	}
 
-	@Override
-	public Survey getSurvey(long id) {
 
-		return entityManager.find(Survey.class, id);
-	}
 
 	@Override
 	@Transactional

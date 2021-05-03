@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -26,6 +28,8 @@ import survey.model.statistic.dao.QuestionResultSummaryDao;
 import survey.model.statistic.dao.ResponseGroupDao;
 import survey.model.survey.Question;
 import survey.model.survey.dao.QuestionDao;
+import survey.model.surveychart.SurveyChart;
+import survey.model.surveychart.dao.SurveyChartDao;
 import survey.util.Views;
 
 @RestController
@@ -41,6 +45,9 @@ public class QuestionController {
 
 	@Autowired
 	private ResponseGroupDao resGroupDao;
+
+	@Autowired
+	private SurveyChartDao surveyChartDao;
 
 	@GetMapping
 	@JsonView(Views.SurveyQuestion.class)
@@ -139,13 +146,22 @@ public class QuestionController {
 	}
 
 	@GetMapping("/{questionId}/resGroups/charts")
-	public Map<Object, Object> getChartRatingTestingResGroup(@PathVariable Long questionId,
+	public List<SurveyChart> getChartRatingResGroup(@PathVariable Long questionId) {
+
+		return surveyChartDao.getSurveyChartsQuestion(questionId);
+	}
+
+	@PostMapping("/{questionId}/resGroups/charts")
+	public Map<Object, Object> addChartRating(@PathVariable Long questionId,
 			@RequestBody Map<String, Object> resGroupInfo) {
+
+		System.out.println("getting charts");
 
 		List<ResponseGroup> resGroups = new ArrayList<>();
 
 		@SuppressWarnings("unchecked")
 		List<Integer> resGroupIds = (List<Integer>) resGroupInfo.get("resGroupIds");
+		String name = (String) resGroupInfo.get("name");
 
 		if (resGroupIds != null) {
 			for (int i = 0; i < resGroupIds.size(); i++) {
@@ -153,11 +169,59 @@ public class QuestionController {
 			}
 		}
 
+		Question question = questionDao.getQuestion(questionId);
+		SurveyChart chart = new SurveyChart();
+		chart.setName(name);
+		chart.setResGroups(resGroups);
+		chart.setQuestion(question);
+
+		surveyChartDao.saveSurveyChart(chart);
+
 		Map<Object, Object> chartInfor =
 				qResultSummaryDao.getRatingQuesChartInfoForResponseGroups(questionId, resGroups);
 
 		return chartInfor;
 	}
 
+	@SuppressWarnings("unchecked")
+	@PutMapping("/{questionId}/resGroups/charts/{chartId}")
+	public Map<Object, Object> updateChartRating(@PathVariable Long questionId,
+			@PathVariable Long chartId, @RequestBody Map<String, Object> resGroupInfo) {
 
+		System.out.println("getting charts");
+
+		List<ResponseGroup> resGroups = new ArrayList<>();
+
+		SurveyChart chart = surveyChartDao.getSurveyChart(chartId);
+		
+		List<Integer> resGroupIds = new ArrayList<>();
+		
+		for (String key : resGroupInfo.keySet()) {
+			switch (key) {
+
+				case "name":
+					chart.setName((String) resGroupInfo.get(key));
+					break;
+				case "resGroupIds":
+					resGroupIds = (List<Integer>) resGroupInfo.get("resGroupIds");
+					break;
+				default:
+			}
+		}
+		
+		if (resGroupIds != null) {
+			for (int i = 0; i < resGroupIds.size(); i++) {
+				resGroups.add(resGroupDao.getResponseGroup(Long.valueOf(resGroupIds.get(i))));
+			}
+		}
+		
+		chart.setResGroups(resGroups);
+
+		surveyChartDao.saveSurveyChart(chart);
+
+		Map<Object, Object> chartInfor =
+				qResultSummaryDao.getRatingQuesChartInfoForResponseGroups(questionId, resGroups);
+
+		return chartInfor;
+	}
 }

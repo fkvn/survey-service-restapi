@@ -11,7 +11,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.Lob;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 import javax.persistence.Table;
@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import io.swagger.annotations.ApiModelProperty;
-import survey.model.core.User;
 import survey.model.response.SurveyResponse;
 import survey.util.Views;
 
@@ -66,6 +65,7 @@ public class Survey implements Serializable {
 	@Column(nullable = true)
 	@JsonView(Views.Internal.class)
 	@ApiModelProperty(position = 3)
+	@Lob
 	private String description;
 
 	@Column(name = "publish_date")
@@ -88,11 +88,9 @@ public class Survey implements Serializable {
 	@ApiModelProperty(position = 7)
 	private boolean closed = true; 
 
-	@ManyToOne
-	@JoinColumn(name = "author_id", nullable = false)
 	@JsonView(Views.Public.class)
 	@ApiModelProperty(hidden = true)
-	private User author;
+	private String authorId;
 
 
 	@OneToMany(fetch = FetchType.EAGER)
@@ -196,16 +194,6 @@ public class Survey implements Serializable {
 		this.createdDate = createdDate;
 	}
 
-	public User getAuthor() {
-
-		return author;
-	}
-
-	public void setAuthor(User author) {
-
-		this.author = author;
-	}
-
 	public List<QuestionSection> getQuestionSections() {
 
 		return questionSections;
@@ -247,6 +235,16 @@ public class Survey implements Serializable {
 	public void setResponses(List<SurveyResponse> responses) {
 
 		this.responses = responses;
+	}
+
+	public String getAuthorId() {
+
+		return authorId;
+	}
+
+	public void setAuthorId(String authorId) {
+
+		this.authorId = authorId;
 	}
 
 }

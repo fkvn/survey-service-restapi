@@ -221,6 +221,8 @@ public class QuestionResultSummaryDaoImpl implements QuestionResultSummaryDao {
 
 		Question question = entityManager.find(Question.class, questionId);
 
+		System.out.println(question.getDecriminatorValue());
+		
 		switch (question.getDecriminatorValue()) {
 			case "RATING": {
 				List<Integer> years = entityManager
@@ -241,22 +243,25 @@ public class QuestionResultSummaryDaoImpl implements QuestionResultSummaryDao {
 					Map<String, Object> serie = new HashMap<>();
 					serie.put("data", new ArrayList<>());
 
-					switch (resGroup.getGroupBy()) {
-						case "surveyId;questionId;mulChoiceSelectionIndex": {
-							if (resGroup.getGroupedValue().split(";").length == 3) {
-								MultipleChoiceQuestion q = entityManager.find(MultipleChoiceQuestion.class,
-										Long.valueOf(resGroup.getGroupedValue().split(";")[1]));
+					// serie name
+					serie.put("name", resGroup.getName());
+//					switch (resGroup.getGroupBy()) {
+//						case "surveyId;questionId;mulChoiceSelectionIndex": {
+//							if (resGroup.getGroupedValue().split(";").length == 3) {
+//								MultipleChoiceQuestion q = entityManager.find(MultipleChoiceQuestion.class,
+//										Long.valueOf(resGroup.getGroupedValue().split(";")[1]));
+//
+//								String serieName =
+//										q.getChoices().get(Integer.valueOf(resGroup.getGroupedValue().split(";")[2]));
+//								serie.put("name", serieName);
+//							}
+//						}
+//							break;
+//						default:
+//							break;
+//					}
 
-								String serieName =
-										q.getChoices().get(Integer.valueOf(resGroup.getGroupedValue().split(";")[2]));
-								serie.put("name", serieName);
-							}
-						}
-							break;
-						default:
-							break;
-					}
-
+					// getting data
 					List<Long> responseIDs = new ArrayList<>();
 					resGroup.getResponses().forEach((SurveyResponse res) -> {
 						responseIDs.add(res.getId());

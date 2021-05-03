@@ -10,6 +10,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
@@ -63,6 +64,7 @@ public class AnswerSection implements Serializable {
   private List<Answer> answers;
   
   @JsonProperty("description")
+  @Lob
   private String description;
  
   

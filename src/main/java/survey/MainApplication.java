@@ -18,12 +18,14 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @SpringBootApplication
+@Configuration
 @EnableSwagger2
 public class MainApplication {
 
@@ -38,9 +40,15 @@ public class MainApplication {
 
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
-
-			http.cors().and().authorizeRequests().antMatchers(HttpMethod.GET, "/surveys/**").permitAll()
-					// .antMatchers(HttpMethod.GET, "/canvas/oauth_callback").permitAll()
+			
+			http.csrf().disable().cors().and().authorizeRequests()
+					.antMatchers(HttpMethod.GET, "/api/surveys/open").permitAll()
+					.antMatchers(HttpMethod.GET, "/api/surveys/{id:\\d+}").permitAll()
+					.antMatchers(HttpMethod.GET, "/api/files/{file_id}").permitAll()
+					.antMatchers(HttpMethod.POST, "/api/surveys/{surveyId:\\d+}/responses").permitAll()
+					.antMatchers(HttpMethod.GET, "/v2/api-docs").permitAll()
+					.antMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
+					.antMatchers(HttpMethod.GET, "/swagger-ui.html").permitAll()
 					.antMatchers(HttpMethod.GET, "/**").hasAuthority("survey-service")
 					.antMatchers(HttpMethod.POST, "/**").hasAuthority("survey-service")
 					.antMatchers(HttpMethod.PUT, "/**").hasAuthority("survey-service")
@@ -67,7 +75,7 @@ public class MainApplication {
 
 		}
 	}
-	
+
 	@Bean
 	public WebMvcConfigurer corsConfigurer() {
 
@@ -86,7 +94,8 @@ public class MainApplication {
 	public Docket productApi() {
 
 		return new Docket(DocumentationType.SWAGGER_2).select()
-				.apis(RequestHandlerSelectors.basePackage("survey.web.controller")).build();
+				.apis(RequestHandlerSelectors.basePackage("survey.web.controller"))
+				.paths(PathSelectors.any()).build();
 	}
 
 }

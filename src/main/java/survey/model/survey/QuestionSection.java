@@ -8,6 +8,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
@@ -44,6 +45,7 @@ public class QuestionSection implements Serializable {
 	private Long id;
 
 	@JsonView(Views.Public.class)
+	@Lob
 	private String description;
 
 	
