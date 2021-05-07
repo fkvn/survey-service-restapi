@@ -1,6 +1,7 @@
 package survey.model.statistic.dao.jpa;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,6 @@ import survey.model.statistic.RatingQRS;
 import survey.model.statistic.ResponseGroup;
 import survey.model.statistic.TextQRS;
 import survey.model.statistic.dao.QuestionResultSummaryDao;
-import survey.model.survey.MultipleChoiceQuestion;
 import survey.model.survey.Question;
 import survey.model.survey.QuestionSection;
 
@@ -230,6 +230,8 @@ public class QuestionResultSummaryDaoImpl implements QuestionResultSummaryDao {
 								+ "FROM SurveyResponse rec where rec.survey.id = :surveyId", Integer.class)
 						.setParameter("surveyId", question.getQuestionSection().getSurvey().getId())
 						.getResultList();
+				
+				Collections.sort(years);
 
 				chartInfo.put("categories", years);
 
