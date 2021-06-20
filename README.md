@@ -1,3 +1,9 @@
 # Survey Service (REST API)
 
-[create-table-script](https://github.com/fkvn/survey-service/blob/master/src/main/resources/scripts/create-tables.sql)
+Contact information: 
+
+email: kv@ckvngo.com
+profile: ckvngo.com
+
+Front-end (UI): https://github.com/fkvn/survey-client-ui
+
