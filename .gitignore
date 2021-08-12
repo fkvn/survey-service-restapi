@@ -30,6 +30,9 @@ build/
 ### VS Code ###
 .vscode/
 
-
+### configuration
 application.properties
+
+### other
 tmp/
+/bin/

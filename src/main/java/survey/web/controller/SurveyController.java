@@ -118,7 +118,8 @@ public class SurveyController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public Long addSurvey(@ModelAttribute("sub") String sub, @RequestBody Survey survey) {
 
-		survey.setAuthorId(sub);
+//		survey.setAuthorId(sub);
+		survey.setAuthorId("testing user");
 		survey.setCreatedDate(new Date());
 
 		if (survey.getType() == null) {
@@ -142,15 +143,15 @@ public class SurveyController {
 		if (survey == null)
 			throw new SurveyNotFoundException();
 
-		if (survey.isClosed()) {
-			// authorize user
-			if (sub == null || sub.length() == 0)
-				throw new AccessDeniedException("401 returned");
-
-			// validate user
-			if (!survey.getAuthorId().equals(sub))
-				throw new AccessDeniedException("403 returned");
-		}
+//		if (survey.isClosed()) {
+//			// authorize user
+//			if (sub == null || sub.length() == 0)
+//				throw new AccessDeniedException("401 returned");
+//
+//			// validate user
+//			if (!survey.getAuthorId().equals(sub))
+//				throw new AccessDeniedException("403 returned");
+//		}
 
 		return survey;
 	}

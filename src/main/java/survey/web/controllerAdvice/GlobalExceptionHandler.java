@@ -37,43 +37,42 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	protected String extractUserFromJWT(HttpServletRequest request) throws ParseException {
 
 //		System.out.println("checking");
-		String sub = "";
+//		String sub = "";
+		String sub = "testing user";
 
-		if (request.getHeader("Authorization") == null
-				|| request.getHeader("Authorization").length() == 0
-				|| request.getHeader("Authorization").equals("null")) {
-			return "";
-		}
-		
-		else {
-//			System.out.println("authorization");
-//			System.out.println(request.getHeader("Authorization"));
-			
-			String token = request.getHeader("Authorization").split(" ")[1]; // get jwt from header
-			String encodedPayload = token.split("\\.")[1]; // get second encoded part in jwt
-			Base64 base64Url = new Base64(true);
-			String payload = new String(base64Url.decode(encodedPayload));
-
-			JSONParser parser = new JSONParser();
-			JSONObject claimsObj = null;
-			
-			
-			try {
-				claimsObj = (JSONObject) parser.parse(payload);
-			} catch (org.json.simple.parser.ParseException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			sub = claimsObj.get("sub").toString();
-
-			if (sub == null || sub.length() == 0)
-				throw new AccessDeniedException("405 returned");
-		}
+//		if (request.getHeader("Authorization") == null
+//				|| request.getHeader("Authorization").length() == 0
+//				|| request.getHeader("Authorization").equals("null")) {
+//			return "";
+//		}
+//		
+//		else {
+////			System.out.println("authorization");
+////			System.out.println(request.getHeader("Authorization"));
+//			
+//			String token = request.getHeader("Authorization").split(" ")[1]; // get jwt from header
+//			String encodedPayload = token.split("\\.")[1]; // get second encoded part in jwt
+//			Base64 base64Url = new Base64(true);
+//			String payload = new String(base64Url.decode(encodedPayload));
+//
+//			JSONParser parser = new JSONParser();
+//			JSONObject claimsObj = null;
+//			
+//			
+//			try {
+//				claimsObj = (JSONObject) parser.parse(payload);
+//			} catch (org.json.simple.parser.ParseException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//
+//			sub = claimsObj.get("sub").toString();
+//
+//			if (sub == null || sub.length() == 0)
+//				throw new AccessDeniedException("405 returned");
+//		}
 
 		return sub;
-		
-//		return "";
 	}
 
 	@ExceptionHandler({ TransactionSystemException.class, DataIntegrityViolationException.class })

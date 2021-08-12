@@ -34,47 +34,47 @@ public class MainApplication {
 		SpringApplication.run(MainApplication.class, args);
 	}
 
-	@EnableWebSecurity
-	@Configuration
-	class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-
-		@Override
-		protected void configure(HttpSecurity http) throws Exception {
-			
-			http.csrf().disable().cors().and().authorizeRequests()
-					.antMatchers(HttpMethod.GET, "/api/surveys/open").permitAll()
-					.antMatchers(HttpMethod.GET, "/api/surveys/{id:\\d+}").permitAll()
-					.antMatchers(HttpMethod.GET, "/api/files/{file_id}").permitAll()
-					.antMatchers(HttpMethod.POST, "/api/surveys/{surveyId:\\d+}/responses").permitAll()
-					.antMatchers(HttpMethod.GET, "/v2/api-docs").permitAll()
-					.antMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
-					.antMatchers(HttpMethod.GET, "/swagger-ui.html").permitAll()
-					.antMatchers(HttpMethod.GET, "/**").hasAuthority("survey-service")
-					.antMatchers(HttpMethod.POST, "/**").hasAuthority("survey-service")
-					.antMatchers(HttpMethod.PUT, "/**").hasAuthority("survey-service")
-					.antMatchers(HttpMethod.PATCH, "/**").hasAuthority("survey-service")
-					.antMatchers(HttpMethod.DELETE, "/**").hasAuthority("survey-service").anyRequest()
-					.authenticated().and().oauth2ResourceServer().jwt()
-					.jwtAuthenticationConverter(new JwtAuthenticationConverter() {
-
-						@Override
-						protected Collection<GrantedAuthority> extractAuthorities(final Jwt jwt) {
-
-							@SuppressWarnings("deprecation")
-							Collection<GrantedAuthority> authorities = super.extractAuthorities(jwt);
-							List<String> scopes = jwt.getClaimAsStringList("scope");
-							if (scopes != null && scopes.contains("alice-survey-service-api"))// check if user has
-																																								// the scope
-																																								// survey-service
-							{
-								authorities.add(new SimpleGrantedAuthority("survey-service"));
-							}
-							return authorities;
-						}
-					});
-
-		}
-	}
+//	@EnableWebSecurity
+//	@Configuration
+//	class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+//
+//		@Override
+//		protected void configure(HttpSecurity http) throws Exception {
+//			
+//			http.csrf().disable().cors().and().authorizeRequests()
+//					.antMatchers(HttpMethod.GET, "/api/surveys/open").permitAll()
+//					.antMatchers(HttpMethod.GET, "/api/surveys/{id:\\d+}").permitAll()
+//					.antMatchers(HttpMethod.GET, "/api/files/{file_id}").permitAll()
+//					.antMatchers(HttpMethod.POST, "/api/surveys/{surveyId:\\d+}/responses").permitAll()
+//					.antMatchers(HttpMethod.GET, "/v2/api-docs").permitAll()
+//					.antMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
+//					.antMatchers(HttpMethod.GET, "/swagger-ui.html").permitAll()
+//					.antMatchers(HttpMethod.GET, "/**").hasAuthority("survey-service")
+//					.antMatchers(HttpMethod.POST, "/**").hasAuthority("survey-service")
+//					.antMatchers(HttpMethod.PUT, "/**").hasAuthority("survey-service")
+//					.antMatchers(HttpMethod.PATCH, "/**").hasAuthority("survey-service")
+//					.antMatchers(HttpMethod.DELETE, "/**").hasAuthority("survey-service").anyRequest()
+//					.authenticated().and().oauth2ResourceServer().jwt()
+//					.jwtAuthenticationConverter(new JwtAuthenticationConverter() {
+//
+//						@Override
+//						protected Collection<GrantedAuthority> extractAuthorities(final Jwt jwt) {
+//
+//							@SuppressWarnings("deprecation")
+//							Collection<GrantedAuthority> authorities = super.extractAuthorities(jwt);
+//							List<String> scopes = jwt.getClaimAsStringList("scope");
+//							if (scopes != null && scopes.contains("alice-survey-service-api"))// check if user has
+//																																								// the scope
+//																																								// survey-service
+//							{
+//								authorities.add(new SimpleGrantedAuthority("survey-service"));
+//							}
+//							return authorities;
+//						}
+//					});
+//
+//		}
+//	}
 
 	@Bean
 	public WebMvcConfigurer corsConfigurer() {
