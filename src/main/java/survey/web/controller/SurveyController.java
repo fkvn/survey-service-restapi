@@ -102,7 +102,8 @@ public class SurveyController {
 	@JsonView(Views.Public.class)
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public List<Survey> getOpenSurvey() {
-
+//		System.out.println("test");
+//		return null;
 		return surveyDao.getOpenSurveys();
 	}
 
@@ -143,15 +144,15 @@ public class SurveyController {
 		if (survey == null)
 			throw new SurveyNotFoundException();
 
-//		if (survey.isClosed()) {
-//			// authorize user
-//			if (sub == null || sub.length() == 0)
-//				throw new AccessDeniedException("401 returned");
-//
-//			// validate user
-//			if (!survey.getAuthorId().equals(sub))
-//				throw new AccessDeniedException("403 returned");
-//		}
+		if (survey.isClosed()) {
+			// authorize user
+			if (sub == null || sub.length() == 0)
+				throw new AccessDeniedException("401 returned");
+
+			// validate user
+			if (!survey.getAuthorId().equals(sub))
+				throw new AccessDeniedException("403 returned");
+		}
 
 		return survey;
 	}
@@ -170,34 +171,34 @@ public class SurveyController {
 
 		for (String key : surveyInfo.keySet()) {
 			switch (key) {
-				case "name":
-					survey.setName((String) surveyInfo.get(key));
-					break;
-				case "description":
-					survey.setDescription((String) surveyInfo.get(key));
-					break;
-				case "publishDate":
-					Date publisedDate = null;
-					try {
-						publisedDate = formatter.parse((String) surveyInfo.get(key));
-					} catch (ParseException e) {
-						throw new UpdatingSurveyError(e.getLocalizedMessage());
-					}
-					survey.setPublishDate(publisedDate);
-					break;
-				case "closeDate":
-					Date closeDate = null;
-					try {
-						closeDate = formatter.parse((String) surveyInfo.get(key));
-					} catch (ParseException e) {
-						throw new UpdatingSurveyError(e.getLocalizedMessage());
-					}
-					survey.setCloseDate(closeDate);
-					break;
-				case "closed":
-					survey.setClosed((boolean) surveyInfo.get(key));
-					break;
-				default:
+			case "name":
+				survey.setName((String) surveyInfo.get(key));
+				break;
+			case "description":
+				survey.setDescription((String) surveyInfo.get(key));
+				break;
+			case "publishDate":
+				Date publisedDate = null;
+				try {
+					publisedDate = formatter.parse((String) surveyInfo.get(key));
+				} catch (ParseException e) {
+					throw new UpdatingSurveyError(e.getLocalizedMessage());
+				}
+				survey.setPublishDate(publisedDate);
+				break;
+			case "closeDate":
+				Date closeDate = null;
+				try {
+					closeDate = formatter.parse((String) surveyInfo.get(key));
+				} catch (ParseException e) {
+					throw new UpdatingSurveyError(e.getLocalizedMessage());
+				}
+				survey.setCloseDate(closeDate);
+				break;
+			case "closed":
+				survey.setClosed((boolean) surveyInfo.get(key));
+				break;
+			default:
 			}
 		}
 
@@ -232,21 +233,19 @@ public class SurveyController {
 				});
 				questionDao.removeQuestion(question.getId());
 			});
-			questionSectionDao.removeQuestionSection(qSection.getId());;
+			questionSectionDao.removeQuestionSection(qSection.getId());
+			;
 		});
-
 
 		surveyDao.removeSurvey(id);
 	}
 
 	// Survey > Section
 
-
 	@JsonView(Views.Public.class)
 	@GetMapping("/{surveyId}/sections")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public List<QuestionSection> getSections(@ModelAttribute("sub") String sub,
-			@PathVariable Long surveyId) {
+	public List<QuestionSection> getSections(@ModelAttribute("sub") String sub, @PathVariable Long surveyId) {
 
 		Survey survey = surveyDao.getSurvey(surveyId);
 		if (!survey.getAuthorId().equals(sub))
@@ -255,12 +254,10 @@ public class SurveyController {
 		return questionSectionDao.getQuestionSections(surveyId);
 	}
 
-
 	@GetMapping("/{surveyId}/sections/{sectionId}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	@JsonView(Views.Internal.class)
-	public QuestionSection getSection(@ModelAttribute("sub") String sub,
-			@PathVariable Long sectionId) {
+	public QuestionSection getSection(@ModelAttribute("sub") String sub, @PathVariable Long sectionId) {
 
 		QuestionSection section = questionSectionDao.getQuestionSection(sectionId);
 
@@ -269,7 +266,6 @@ public class SurveyController {
 
 		return section;
 	}
-
 
 	@PostMapping("/{surveyId}/sections")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -306,10 +302,10 @@ public class SurveyController {
 		for (String key : questionSectionInfo.keySet()) {
 			switch (key) {
 
-				case "description":
-					section.setDescription((String) questionSectionInfo.get(key));
-					break;
-				default:
+			case "description":
+				section.setDescription((String) questionSectionInfo.get(key));
+				break;
+			default:
 			}
 		}
 
@@ -318,7 +314,6 @@ public class SurveyController {
 
 		return section.getId();
 	}
-
 
 	@PutMapping("/{surveyId}/sections/{sectionId}/index")
 	@ResponseStatus(HttpStatus.ACCEPTED)
@@ -371,8 +366,7 @@ public class SurveyController {
 	@GetMapping("/{surveyId}/sections/{sectionId}/questions")
 	@JsonView(Views.Public.class)
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public List<Question> getSectionQuestions(@ModelAttribute("sub") String sub,
-			@PathVariable Long sectionId) {
+	public List<Question> getSectionQuestions(@ModelAttribute("sub") String sub, @PathVariable Long sectionId) {
 
 		QuestionSection section = questionSectionDao.getQuestionSection(sectionId);
 
@@ -423,8 +417,7 @@ public class SurveyController {
 				try {
 					// file validation
 					for (int i = 0; i < files.length; i++) {
-						if (!files[i].isEmpty()
-								&& !files[i].getContentType().split("/")[0].trim().equals("image")) {
+						if (!files[i].isEmpty() && !files[i].getContentType().split("/")[0].trim().equals("image")) {
 							throw new AddingQuestionError(
 									"Uploaded files are not supported!!! Only Image file type can be uploaded!");
 						}
@@ -489,8 +482,7 @@ public class SurveyController {
 			if (files != null && files.length > 0) {
 				try {
 					for (int i = 0; i < files.length; i++) {
-						if (!files[i].isEmpty()
-								&& !files[i].getContentType().split("/")[0].trim().equals("image")) {
+						if (!files[i].isEmpty() && !files[i].getContentType().split("/")[0].trim().equals("image")) {
 							throw new Exception(
 									"Uploaded files are not supported!!! Only Image file type can be uploaded!");
 						}
@@ -516,9 +508,7 @@ public class SurveyController {
 			Long questionIndex = (long) questionSection.getQuestions().indexOf(existedQuestion);
 
 			// update existed question with new question info and files
-			existedQuestion =
-					questionDao.updateQuestion(sectionId, questionIndex, questionId, question, newFiles);
-
+			existedQuestion = questionDao.updateQuestion(sectionId, questionIndex, questionId, question, newFiles);
 
 			return existedQuestion.getId();
 
@@ -530,8 +520,7 @@ public class SurveyController {
 	@PutMapping("/{surveyId}/sections/{sectionId}/questions/{questionId}/index")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public void updateQuestionIndex(@ModelAttribute("sub") String sub, @PathVariable Long surveyId,
-			@PathVariable Long sectionId, @PathVariable Long questionId,
-			@RequestBody Map<String, Object> requestInfo) {
+			@PathVariable Long sectionId, @PathVariable Long questionId, @RequestBody Map<String, Object> requestInfo) {
 
 		Question question = questionDao.getQuestion(questionId);
 
@@ -596,7 +585,7 @@ public class SurveyController {
 		// validate user
 		if (!survey.getAuthorId().equals(sub))
 			throw new AccessDeniedException("403 returned");
-		
+
 		Map<Long, Object> surveyQRS = new HashMap<>();
 
 		survey.getQuestionSections().forEach(sec -> {
@@ -604,7 +593,6 @@ public class SurveyController {
 			surveyQRS.put(sec.getId(), getAllQRSFromSection(sec));
 
 		});
-
 
 		return surveyQRS;
 	}
@@ -632,10 +620,8 @@ public class SurveyController {
 
 			System.out.println("isNull: " + question.getId());
 
-			QuestionResultSummary qResultSummary =
-					qResultSummaryDao.getQuestionResultSummaryByQuestionId(question.getId());
-
-
+			QuestionResultSummary qResultSummary = qResultSummaryDao
+					.getQuestionResultSummaryByQuestionId(question.getId());
 
 			if (qResultSummary != null) {
 				qResultSummary.updateResultSummary();
@@ -644,40 +630,37 @@ public class SurveyController {
 			else {
 
 				switch (question.getDecriminatorValue()) {
-					case "MULTIPLE_CHOICE": {
-						System.out.println("mc: " + question.getId());
-						qResultSummary =
-								new MultipleChoiceQRS(question.getQuestionSection().getSurvey(), question);
-					}
-						break;
+				case "MULTIPLE_CHOICE": {
+					System.out.println("mc: " + question.getId());
+					qResultSummary = new MultipleChoiceQRS(question.getQuestionSection().getSurvey(), question);
+				}
+					break;
 
-					case "RANKING": {
-						qResultSummary = new RankingQRS(question.getQuestionSection().getSurvey(), question);
-					}
-						break;
+				case "RANKING": {
+					qResultSummary = new RankingQRS(question.getQuestionSection().getSurvey(), question);
+				}
+					break;
 
-					case "RATING": {
-						qResultSummary = new RatingQRS(question.getQuestionSection().getSurvey(), question);
-					}
-						break;
+				case "RATING": {
+					qResultSummary = new RatingQRS(question.getQuestionSection().getSurvey(), question);
+				}
+					break;
 
-					case "TEXT": {
-						qResultSummary = new TextQRS(question.getQuestionSection().getSurvey(), question);
-					}
-						break;
+				case "TEXT": {
+					qResultSummary = new TextQRS(question.getQuestionSection().getSurvey(), question);
+				}
+					break;
 
-					default:
-						break;
+				default:
+					break;
 				}
 			}
-
 
 			if (qResultSummary != null) {
 				qResultSummary = qResultSummaryDao.saveQuestionResultSummary(qResultSummary);
 			}
 
 			qResultSummaries.put(question.getId(), qResultSummary);
-
 
 		});
 		return qResultSummaries;
@@ -692,12 +675,12 @@ public class SurveyController {
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	@JsonView(Views.Public.class)
 	public List<SurveyResponse> getSurveyResponses(@ModelAttribute("sub") String sub, @PathVariable Long surveyId) {
-		
+
 		Survey survey = surveyDao.getSurvey(surveyId);
-		
+
 		if (!survey.getAuthorId().equals(sub))
 			throw new AccessDeniedException("403 returned");
-		
+
 		return surveyResponseDao.getSurveyResponses(surveyId);
 	}
 
@@ -706,20 +689,19 @@ public class SurveyController {
 	@JsonView(Views.Public.class)
 	public List<SurveyResponse> getSurveyResponsesAll(@ModelAttribute("sub") String sub, @PathVariable Long surveyId) {
 		Survey survey = surveyDao.getSurvey(surveyId);
-		
+
 		if (!survey.getAuthorId().equals(sub))
 			throw new AccessDeniedException("403 returned");
-		
+
 		return surveyResponseDao.getSurveyResponsesAll(surveyId);
 	}
-	
 
 	@PostMapping("/{surveyId}/responses")
 	@ResponseStatus(HttpStatus.CREATED)
 	public Long addSurveyResponse(@PathVariable Long surveyId, @RequestBody SurveyResponse response) {
-		
+
 		Survey survey = surveyDao.getSurvey(surveyId);
-		
+
 		response.setSurvey(survey);
 		response.setDate(new Date());
 
@@ -730,10 +712,10 @@ public class SurveyController {
 		}
 		// correct #ofSections
 		else {
-			for (int sectionIndex = 0; sectionIndex < response.getAnswerSections()
-					.size(); sectionIndex++) {
+			for (int sectionIndex = 0; sectionIndex < response.getAnswerSections().size(); sectionIndex++) {
 
-				// not the same order of section Or don't have the same #ofanswer for each section
+				// not the same order of section Or don't have the same #ofanswer for each
+				// section
 				if (survey.getQuestionSections().get(sectionIndex).getSectionIndex() != sectionIndex
 						|| response.getAnswerSections().get(sectionIndex).getAnswers().size() != survey
 								.getQuestionSections().get(sectionIndex).getQuestions().size()) {
@@ -747,8 +729,8 @@ public class SurveyController {
 					int answerIndex = 0;
 					for (Answer answer : response.getAnswerSections().get(sectionIndex).getAnswers()) {
 
-						Question question =
-								survey.getQuestionSections().get(sectionIndex).getQuestions().get(answerIndex);
+						Question question = survey.getQuestionSections().get(sectionIndex).getQuestions()
+								.get(answerIndex);
 
 						// unmatched between answer and question
 						if (answerIndex != question.getQuestionIndex()
@@ -757,41 +739,40 @@ public class SurveyController {
 						} else {
 							// type requirements
 							switch (answer.getDecriminatorValue()) {
-								case "MULTIPLE_CHOICE":
-									Set<Integer> answerSelections = ((MultipleChoiceAnswer) answer).getSelections();
-									List<String> questionChoice = ((MultipleChoiceQuestion) question).getChoices();
-									int minSelections = ((MultipleChoiceQuestion) question).getMinSelections();
-									int maxSelections = ((MultipleChoiceQuestion) question).getMaxSelections();
+							case "MULTIPLE_CHOICE":
+								Set<Integer> answerSelections = ((MultipleChoiceAnswer) answer).getSelections();
+								List<String> questionChoice = ((MultipleChoiceQuestion) question).getChoices();
+								int minSelections = ((MultipleChoiceQuestion) question).getMinSelections();
+								int maxSelections = ((MultipleChoiceQuestion) question).getMaxSelections();
 
-									if (answerSelections == null) {
-										answerSelections = new HashSet<Integer>();
+								if (answerSelections == null) {
+									answerSelections = new HashSet<Integer>();
+								}
+
+								if (answerSelections.size() > maxSelections
+										|| answerSelections.size() < minSelections) {
+									throw new InvalidResponse("Unmatched number of selections!");
+								}
+
+								answerSelections.forEach((selection) -> {
+									if (selection > questionChoice.size() - 1) {
+										throw new InvalidResponse("Unmatched selections!");
 									}
+								});
 
-									if (answerSelections.size() > maxSelections
-											|| answerSelections.size() < minSelections) {
-										throw new InvalidResponse("Unmatched number of selections!");
-									}
+								break;
 
-									answerSelections.forEach((selection) -> {
-										if (selection > questionChoice.size() - 1) {
-											throw new InvalidResponse("Unmatched selections!");
-										}
-									});
+							case "RANKING":
+								if (((RankingAnswer) answer).getSelectionRanks().size() != ((RankingQuestion) question)
+										.getRankingChoices().size()) {
+									throw new InvalidResponse("Unmatched ranking answer!");
+								}
+								break;
 
-									break;
-
-								case "RANKING":
-									if (((RankingAnswer) answer).getSelectionRanks()
-											.size() != ((RankingQuestion) question).getRankingChoices().size()) {
-										throw new InvalidResponse("Unmatched ranking answer!");
-									}
-									break;
-
-								default:
-									break;
+							default:
+								break;
 
 							}
-
 
 							answer.setDescription(question.getDescription());
 							answer.setQuestion(question);
@@ -805,7 +786,6 @@ public class SurveyController {
 		return surveyResponseDao.saveResponse(response).getId();
 
 	}
-	
 
 	@GetMapping("/{surveyId}/responses/{responseId}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
@@ -813,10 +793,10 @@ public class SurveyController {
 	public SurveyResponse getSurveyResponse(@ModelAttribute("sub") String sub, @PathVariable Long responseId) {
 
 		SurveyResponse response = surveyResponseDao.getResponse(responseId);
-		
+
 		if (!response.getSurvey().getAuthorId().equals(sub))
 			throw new AccessDeniedException("403 returned");
-		
+
 		return surveyResponseDao.getResponse(responseId);
 	}
 
@@ -833,11 +813,9 @@ public class SurveyController {
 
 		surveyResponseDao.saveResponse(response);
 	}
-	
 
 	// =================================================================
 
 	// Survey > Response
-
 
 }
